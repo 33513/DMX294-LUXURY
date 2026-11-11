@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f7fb">
+<title>DMX • Realtime Luxury Dashboard</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#17233b;--muted:#77849a;--line:#e7ebf2;--blue:#2563eb;--blue2:#60a5fa;--gold:#c6a15b;--green:#059669;--red:#dc2626;--amber:#d97706;--shadow:0 12px 32px rgba(28,48,89,.07)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 5% 0%,#eaf1ff 0,transparent 32%),radial-gradient(circle at 95% 10%,#fff4df 0,transparent 25%),var(--bg);color:var(--ink);font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1440px;margin:auto;padding:22px clamp(14px,3vw,36px) 44px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:24px}
+.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,#1d4ed8,#60a5fa);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 8px 20px #2563eb35}.brand h1{font-size:clamp(18px,2.4vw,25px);margin:0;letter-spacing:-.6px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.header-right{display:flex;align-items:center;gap:10px}.live{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #bce8d7;background:#effcf6;border-radius:99px;color:#087b55;font-size:12px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 4px #10b98120}.stamp{color:var(--muted);font-size:12px}
+nav{display:flex;gap:8px;overflow:auto;padding:0 0 16px;scrollbar-width:none}nav a{white-space:nowrap;text-decoration:none;color:#64748b;background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:99px;font-weight:650;font-size:13px}nav a:first-child{background:#eff5ff;color:#1d4ed8;border-color:#cfe0ff}
+section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}.eyebrow{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:var(--gold);font-weight:800}.section-head h2{margin:3px 0 0;font-size:clamp(18px,2vw,23px);letter-spacing:-.5px}.section-head p{margin:0;color:var(--muted);font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px}.kpi{position:relative;overflow:hidden;background:linear-gradient(145deg,#fff,#fbfcff);border:1px solid #e6eaf2;border-radius:19px;padding:17px 17px 15px;box-shadow:var(--shadow);min-height:145px}.kpi:after{content:"";position:absolute;right:-30px;top:-40px;width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#dbeafe66,#fff0)}.k-label{font-size:12px;color:#68768d;font-weight:700;display:flex;align-items:center;gap:8px}.ico{width:27px;height:27px;border-radius:9px;background:#edf4ff;color:#2563eb;display:grid;place-items:center;font-size:14px}.k-value{font-size:clamp(24px,3vw,34px);font-weight:850;letter-spacing:-1.2px;margin:13px 0 5px;line-height:1.1}.k-foot{font-size:11px;color:#8b97aa}.kpi.gold .ico{background:#fbf5e9;color:#b58a35}.kpi.green .ico{background:#e9fbf3;color:#059669}.kpi.red .ico{background:#fff0f0;color:#dc2626}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.panel-top{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}.panel-top h3{margin:0;font-size:15px}.pill{font-size:11px;padding:5px 9px;border-radius:99px;background:#eff5ff;color:#2563eb;font-weight:750}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formbox{padding:17px}.formbox label{display:block;font-size:12px;color:#64748b;font-weight:700;margin-bottom:7px}.formbox input{width:100%;padding:12px;border:1px solid #dce3ee;border-radius:12px;background:#fbfcff;color:var(--ink);font:inherit;outline:none}.formbox input:focus{border-color:#93b4ff;box-shadow:0 0 0 3px #2563eb12}.formbox small{display:block;color:#9aa5b6;margin-top:6px;font-size:11px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:0;background:linear-gradient(135deg,#2563eb,#4f8df8);color:#fff;font-weight:750;padding:11px 16px;border-radius:12px;box-shadow:0 8px 18px #2563eb25;cursor:pointer}.btn.secondary{background:#fff;color:#52627b;border:1px solid var(--line);box-shadow:none}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:13px}th{background:#f8faff;color:#68768d;font-size:11px;letter-spacing:.35px;text-align:left;padding:13px 14px;white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}td{padding:13px 14px;border-bottom:1px solid #edf0f5;white-space:nowrap}tbody tr:hover{background:#f9fbff}td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}.user{font-size:11px;color:#8a96aa}.name{font-weight:750}.percent{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:#64748b}.bar{height:6px;background:#edf1f7;border-radius:99px;overflow:hidden;margin-top:6px;min-width:70px}.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#2563eb)}
+.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div class="brand"><div class="mark">D</div><div><h1>DMX <span style="color:#c6a15b">LUXURY</span></h1><p>Realtime Performance • Executive Analytics</p></div></div>
+ <div class="header-right"><span class="live"><span class="dot"></span> LIVE PREVIEW</span><span class="stamp" id="updated">Prototype • 11/11/2026</span></div>
+</header>
+<nav><a href="#overview">Tổng quan</a><a href="#staff">Nhân viên</a><a href="#race">Thi đua</a><a href="#settings">Data & Target</a></nav>
+<section id="overview">
+ <div class="section-head"><div><div class="eyebrow">Executive overview</div><h2>01. Tổng quan doanh thu realtime</h2></div><p>Đơn vị: triệu đồng</p></div>
+ <div class="kpis">
+  <div class="kpi"><div class="k-label"><span class="ico">₫</span> DThu QĐ tổng</div><div class="k-value" id="total">124</div><div class="k-foot">Doanh thu quy đổi</div></div>
+  <div class="kpi gold"><div class="k-label"><span class="ico">◎</span> Target ngày</div><div class="k-value" id="target">190</div><div class="k-foot">Mục tiêu doanh thu QĐ</div></div>
+  <div class="kpi green"><div class="k-label"><span class="ico">↗</span> % HT Target</div><div class="k-value" id="completion">65.3%</div><div class="k-foot">Tổng thực hiện / Target</div></div>
+  <div class="kpi"><div class="k-label"><span class="ico">▤</span> DThu trả góp</div><div class="k-value" id="installment">82</div><div class="k-foot">Doanh thu góp quy đổi</div></div>
+  <div class="kpi red"><div class="k-label"><span class="ico">％</span> % trả góp</div><div class="k-value" id="share">66.1%</div><div class="k-foot">Trả góp / DThu QĐ tổng</div></div>
+ </div>
+</section>
+<section id="staff">
+ <div class="section-head"><div><div class="eyebrow">People performance</div><h2>02. Doanh thu nhân viên realtime</h2></div><p>Màu hoàn thành so với KPI cửa hàng</p></div>
+ <div class="panel"><div class="panel-top"><h3>Hiệu suất đội ngũ</h3><span class="pill" id="staffcount">3 nhân viên</span></div>
+ <div class="table-wrap"><table><thead><tr><th>USER</th><th>TÊN NV</th><th style="text-align:right">DTHU QĐ</th><th style="text-align:right">DTHU GÓP</th><th style="text-align:right">TỶ TRỌNG GÓP</th><th style="text-align:right">TARGET NGÀY</th><th>% HT TARGET</th></tr></thead><tbody id="staffbody"></tbody></table></div>
+ <div class="footnote">Xanh: % nhân viên cao hơn KPI tổng • Đỏ: thấp hơn KPI tổng.</div></div>
+</section>
+<section id="race">
+ <div class="section-head"><div><div class="eyebrow">Category leaderboard</div><h2>03. Thi đua realtime</h2></div><p>Tiến độ từng chương trình</p></div>
+ <div class="panel"><div class="panel-top"><h3>Ngành hàng & chương trình</h3><span class="pill">DAILY TARGET</span></div>
+ <div class="table-wrap"><table style="min-width:560px"><thead><tr><th>CHƯƠNG TRÌNH</th><th style="text-align:right">THỰC HIỆN</th><th style="text-align:right">TARGET NGÀY</th><th style="text-align:right">% HT TARGET</th></tr></thead><tbody id="racebody"></tbody></table></div>
+ <div class="footnote">Dữ liệu chương trình được nhập theo các hàng đọc được từ ảnh bạn gửi; các hàng ảnh chồng lặp đã được gộp.</div></div>
+</section>
+<section id="settings">
+ <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Data & Target</h2></div><p>Nhập mục tiêu để map KPI</p></div>
+ <div class="data-grid">
+  <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value="190"><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
+  <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
+ </div>
+</section>
+<div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
+</div>
+<script>
+const staff=[
+ {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:84,gift:82,target:100},
+ {user:"258196",name:"Lê Xuân Hải",sales:15,gift:0,target:35},
+ {user:"179512",name:"Phạm Văn Thuận",sales:13,gift:0,target:30},
+ {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:25},
+ {user:"281312",name:"Nguyễn Công Toàn",sales:0,gift:0,target:25},
+ {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25}
+];
+const races=[
+ ["Điện tử Samsung",0,3.47],["CE LG",14.90,9.73],["Tivi TCL",7.82,1.61],
+ ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
+ ["Camera",0,1.00],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
+ ["Điện thoại Vivo",0,1.67],["Đồng hồ & Smartwatch",0,1.87],["Laptop",0,2.79],
+ ["Loa Phụ Kiện",0,0.93],["Máy Lạnh",0,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],
+ ["Máy nước nóng",0,1.00],["Máy sấy / Máy rửa chén",0,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],
+ ["Phụ kiện công nghệ",0,0.11],["Quạt gió",0,0.83],["Sim",0,2.00],["Sim ĐMX",0,1.00],
+ ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Phụ kiện khác IT & Nhóm khác",0.30,5.60],
+ ["ĐIỆN THOẠI & TABLET ANDROID",3.32,42.73],["Trả chậm Homecredit",13.98,69.23],
+ ["Cáp sạc",0.15,0.72],["VAS",2,9],["Tai nghe",0.20,0.86],["Sạc dự phòng",0.23,0.82],
+ ["Nạp rút",3,8],["Nồi cơm & Nồi chiên",1.54,3.90],["Điện tử",7.82,17.63],
+ ["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
+ ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
+ ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
+];
+let storeTarget=190, staffTargetDefault=25;
+function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
+function pct(a,b){return b>0?a/b*100:0}
+function render(){
+ const total=staff.reduce((s,x)=>s+x.sales,0), gift=staff.reduce((s,x)=>s+x.gift,0), base=pct(total,storeTarget);
+ document.getElementById("total").textContent=fmt(total);
+ document.getElementById("target").textContent=fmt(storeTarget);
+ document.getElementById("completion").textContent=base.toFixed(1)+"%";
+ document.getElementById("installment").textContent=fmt(gift);
+ document.getElementById("share").textContent=pct(gift,total).toFixed(1)+"%";
+ document.getElementById("staffcount").textContent=staff.length+" nhân viên";
+ document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
+  let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
+  return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
+ }).join("");
+ document.getElementById("racebody").innerHTML=[...races].sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2])).map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
+}
+function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
+function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
+function resetTargets(){if(!confirm("Khôi phục dữ liệu mẫu?"))return;location.reload()}
+render();
+</script>
+</body></html>
