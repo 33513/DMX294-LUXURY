@@ -80,35 +80,35 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 </div>
 <script>
 const staff=[
- {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:87,gift:82,target:25},
- {user:"168190",name:"Nguyễn Văn Ngoan",sales:62,gift:58,target:25},
- {user:"179512",name:"Phạm Văn Thuận",sales:28,gift:0,target:25},
- {user:"258196",name:"Lê Xuân Hải",sales:26,gift:0,target:25},
- {user:"281312",name:"Nguyễn Công Toàn",sales:16,gift:0,target:25},
- {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:25},
- {user:"71995",name:"Đặng Thị Thảo Trinh",sales:9,gift:0,target:25},
- {user:"18868",name:"Nguyễn Thị Lý",sales:6,gift:0,target:25},
- {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25},
- {user:"111566",name:"Nguyễn Nhật Minh",sales:0,gift:0,target:25}
+ {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:87,gift:82,target:60},
+ {user:"168190",name:"Nguyễn Văn Ngoan",sales:68,gift:58,target:60},
+ {user:"179512",name:"Phạm Văn Thuận",sales:28,gift:0,target:60},
+ {user:"258196",name:"Lê Xuân Hải",sales:26,gift:0,target:60},
+ {user:"281312",name:"Nguyễn Công Toàn",sales:16,gift:0,target:60},
+ {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:60},
+ {user:"71995",name:"Đặng Thị Thảo Trinh",sales:9,gift:0,target:60},
+ {user:"18868",name:"Nguyễn Thị Lý",sales:6,gift:0,target:60},
+ {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:60},
+ {user:"111566",name:"Nguyễn Nhật Minh",sales:0,gift:0,target:60}
 ];
 const races=[
  ["Điện tử Samsung",0,3.47],["CE LG",26.13,9.73],["Tivi TCL",7.82,1.61],
  ["Máy Lạnh",0,2],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],["Máy nước nóng",0,1],
  ["Máy sấy / Máy rửa chén",0,1.13],["Quạt gió",0,0.83],["Điện tử",7.82,17.63],
- ["Nồi cơm & Nồi chiên",2.55,3.90],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy giặt",31.44,13.22],["Máy lọc nước",25.69,7.27],
+ ["Nồi cơm & Nồi chiên",6.46,3.90],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy giặt",31.44,13.22],["Máy lọc nước",25.69,7.27],
  ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
  ["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],["Sim",0,2],["Sim ĐMX",0,1],
  ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Trả chậm Homecredit",13.98,69.23],
- ["VAS",5,9],["Nạp rút",5,8],["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
+ ["VAS",17,9],["Nạp rút",5,8],["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
  ["Trả chậm FECREDIT, SAMSUNG F+, SHINHAN, MCREDIT",78.62,23.10],
  ["Camera",0,1],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
  ["Điện thoại Vivo",0,1.67],["Đồng hồ & Smartwatch",0,1.87],["Laptop",0,2.79],
  ["Loa Phụ Kiện",0,0.93],["Phụ kiện công nghệ",0,0.11],
  ["ĐIỆN THOẠI & TABLET ANDROID",6.75,42.73],["Tai nghe",0.32,0.86],
- ["Phụ kiện khác IT & Nhóm khác",3.35,5.60],["Sạc dự phòng",0.50,0.82],["Cáp sạc",0.45,0.72]
+ ["Phụ kiện khác IT & Nhóm khác",3.35,5.60],["Sạc dự phòng",0.50,0.82],["Cáp sạc",0.87,0.72]
 ];
-let storeTarget=190, staffTargetDefault=25, storeSales=245, storeGift=141;
-const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
+let storeTarget=400, staffTargetDefault=60, storeSales=257, storeGift=141;
+const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SHINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
  document.getElementById(id).innerHTML=rows.map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
