@@ -18,9 +18,9 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 .panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.panel-top{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}.panel-top h3{margin:0;font-size:15px}.pill{font-size:11px;padding:5px 9px;border-radius:99px;background:#eff5ff;color:#2563eb;font-weight:750}
 .data-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formbox{padding:17px}.formbox label{display:block;font-size:12px;color:#64748b;font-weight:700;margin-bottom:7px}.formbox input{width:100%;padding:12px;border:1px solid #dce3ee;border-radius:12px;background:#fbfcff;color:var(--ink);font:inherit;outline:none}.formbox input:focus{border-color:#93b4ff;box-shadow:0 0 0 3px #2563eb12}.formbox small{display:block;color:#9aa5b6;margin-top:6px;font-size:11px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:0;background:linear-gradient(135deg,#2563eb,#4f8df8);color:#fff;font-weight:750;padding:11px 16px;border-radius:12px;box-shadow:0 8px 18px #2563eb25;cursor:pointer}.btn.secondary{background:#fff;color:#52627b;border:1px solid var(--line);box-shadow:none}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:13px}th{background:#f8faff;color:#68768d;font-size:11px;letter-spacing:.35px;text-align:left;padding:13px 14px;white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}td{padding:13px 14px;border-bottom:1px solid #edf0f5;white-space:nowrap}tbody tr:hover{background:#f9fbff}td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}.user{font-size:11px;color:#8a96aa}.name{font-weight:750}.percent{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:#64748b}.bar{height:6px;background:#edf1f7;border-radius:99px;overflow:hidden;margin-top:6px;min-width:70px}.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#2563eb)}
-.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
+.race-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.race-panel{min-width:0}.race-table{min-width:0;width:100%;font-size:12px}.race-table th{padding:10px 9px}.race-table td{padding:10px 9px;white-space:normal}.race-table td:last-child{text-align:right;white-space:nowrap}.race-table .name{font-size:12px;line-height:1.35}.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
+@media(max-width:1050px){.race-columns{grid-template-columns:1fr}}\n@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
 </style>
 </head>
 <body>
@@ -48,9 +48,12 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 </section>
 <section id="race">
  <div class="section-head"><div><div class="eyebrow">Category leaderboard</div><h2>03. Thi đua realtime</h2></div><p>Tiến độ từng chương trình</p></div>
- <div class="panel"><div class="panel-top"><h3>Ngành hàng & chương trình</h3><span class="pill">DAILY TARGET</span></div>
- <div class="table-wrap"><table style="min-width:560px"><thead><tr><th>CHƯƠNG TRÌNH</th><th style="text-align:right">THỰC HIỆN</th><th style="text-align:right">TARGET NGÀY</th><th style="text-align:right">% HT TARGET</th></tr></thead><tbody id="racebody"></tbody></table></div>
- <div class="footnote">Dữ liệu chương trình được nhập theo các hàng đọc được từ ảnh bạn gửi; các hàng ảnh chồng lặp đã được gộp.</div></div>
+ <div class="race-columns">
+  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
+ </div>
+ <div class="footnote">Mỗi nhóm hiển thị riêng và sắp xếp % hoàn thành Target giảm dần.</div>
 </section>
 <section id="settings">
  <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Data & Target</h2></div><p>Nhập mục tiêu để map KPI</p></div>
@@ -86,7 +89,12 @@ const races=[
  ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
  ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
 ];
-let storeTarget=190, staffTargetDefault=25;
+let storeTarget=190, staffTargetDefault=25;\nconst raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
+function renderRaceGroup(group,id){
+ const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
+ document.getElementById(id).innerHTML=rows.map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
+}
+
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
 function render(){
@@ -96,12 +104,12 @@ function render(){
  document.getElementById("completion").textContent=base.toFixed(1)+"%";
  document.getElementById("installment").textContent=fmt(gift);
  document.getElementById("share").textContent=pct(gift,total).toFixed(1)+"%";
+  renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
   let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
- document.getElementById("racebody").innerHTML=[...races].sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2])).map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
