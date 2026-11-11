@@ -137,14 +137,16 @@ async function runOCR(){
   if(!window.Tesseract){
    await new Promise((resolve,reject)=>{
     const s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
     s.onload=resolve;s.onerror=()=>reject(new Error("Không tải được Tesseract.js từ CDN. Hãy kiểm tra mạng hoặc thử Chrome."));
     document.head.appendChild(s);
    });
   }
-  st.textContent="Bước 2/3: tải dữ liệu ngôn ngữ Việt + Anh…";
+  st.textContent="Bước 2/3: tải worker, engine và dữ liệu Việt + Anh…";
   worker=await Tesseract.createWorker("vie+eng",1,{
-   logger:m=>{if(m.status==="recognizing text")st.textContent="Đang nhận dạng: "+Math.round((m.progress||0)*100)+"%"},
+   logger:m=>{st.textContent=(m.status||"Đang xử lý")+" "+Math.round((m.progress||0)*100)+"%"},
+   workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
+   corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js",
    langPath:"https://tessdata.projectnaptha.com/4.0.0",
    gzip:true
   });
@@ -158,7 +160,7 @@ async function runOCR(){
   st.textContent="Đã OCR xong "+fs.length+" ảnh. Kết quả ở ô bên dưới.";
   if(!out.value.trim())st.textContent="OCR chạy xong nhưng không đọc được chữ. Hãy dùng ảnh rõ, thẳng và đủ sáng.";
  }catch(e){
-  st.textContent="OCR thất bại: "+(e.message||e);
+  st.textContent="OCR thất bại: "+(e.message||e)+" (có thể CDN/Worker bị chặn bởi mạng hoặc trình duyệt)";
   alert("OCR chưa chạy được. "+(e.message||e)+"\nKiểm tra Internet và thử ảnh JPG/PNG rõ nét.");
  }finally{
   if(worker){try{await worker.terminate()}catch(_){}}
