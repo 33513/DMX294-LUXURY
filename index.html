@@ -18,9 +18,9 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 .panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.panel-top{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}.panel-top h3{margin:0;font-size:15px}.pill{font-size:11px;padding:5px 9px;border-radius:99px;background:#eff5ff;color:#2563eb;font-weight:750}
 .data-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formbox{padding:17px}.formbox label{display:block;font-size:12px;color:#64748b;font-weight:700;margin-bottom:7px}.formbox input{width:100%;padding:12px;border:1px solid #dce3ee;border-radius:12px;background:#fbfcff;color:var(--ink);font:inherit;outline:none}.formbox input:focus{border-color:#93b4ff;box-shadow:0 0 0 3px #2563eb12}.formbox small{display:block;color:#9aa5b6;margin-top:6px;font-size:11px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:0;background:linear-gradient(135deg,#2563eb,#4f8df8);color:#fff;font-weight:750;padding:11px 16px;border-radius:12px;box-shadow:0 8px 18px #2563eb25;cursor:pointer}.btn.secondary{background:#fff;color:#52627b;border:1px solid var(--line);box-shadow:none}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:13px}th{background:#f8faff;color:#68768d;font-size:11px;letter-spacing:.35px;text-align:left;padding:13px 14px;white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}td{padding:13px 14px;border-bottom:1px solid #edf0f5;white-space:nowrap}tbody tr:hover{background:#f9fbff}td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}.user{font-size:11px;color:#8a96aa}.name{font-weight:750}.percent{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:#64748b}.bar{height:6px;background:#edf1f7;border-radius:99px;overflow:hidden;margin-top:6px;min-width:70px}.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#2563eb)}
-.race-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.race-panel{min-width:0}.race-table{min-width:520px;width:100%;font-size:12px}.race-table th{padding:10px 9px}.race-table td{padding:10px 9px;white-space:normal}.race-table td:last-child{text-align:right;white-space:nowrap}.race-table .name{font-size:12px;line-height:1.35}.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
+.race-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.race-panel{min-width:0}.race-table{min-width:0;width:100%;table-layout:fixed;font-size:10px}.race-table th{padding:7px 4px;font-size:9px;letter-spacing:0}.race-table td{padding:7px 4px;white-space:normal;overflow-wrap:anywhere}.race-table td:last-child{text-align:right;white-space:nowrap}.race-table .name{font-size:10px;line-height:1.25}.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
 @media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:1050px){.race-columns{grid-template-columns:1fr}}\n@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
+@media(max-width:1050px){.race-columns{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}}\n@media(max-width:700px){.race-columns{grid-template-columns:1fr}.race-table{font-size:12px}.race-table th{font-size:10px;padding:9px 7px}.race-table td{padding:9px 7px}.race-table .name{font-size:12px}}\n@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
 </style>
 </head>
 <body>
@@ -49,9 +49,9 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <section id="race">
  <div class="section-head"><div><div class="eyebrow">Category leaderboard</div><h2>03. Thi đua realtime</h2></div><p>Tiến độ từng chương trình</p></div>
  <div class="race-columns">
-  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill">13 CT</span></div><div class="table-wrap"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
  </div>
  <div class="footnote">Mỗi nhóm hiển thị riêng và sắp xếp % hoàn thành Target giảm dần.</div>
 </section>
@@ -64,10 +64,10 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
-<div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
+<div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Map DThu QĐ tổng</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
 <div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
 <textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
-<small>OCR trích chữ để kiểm tra; chưa tự động cập nhật số liệu bảng nhằm tránh ghi sai chương trình hoặc Target.</small></div></div>
+<small>OCR đọc chữ. Nút Map chỉ nhận DThu QĐ tổng có nhãn rõ; dữ liệu nhân viên/thi đua cần bảng đối chiếu xác nhận, không tự đoán.</small></div></div>
  </div>
 </section>
 <div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
@@ -167,6 +167,17 @@ async function runOCR(){
   if(worker){try{await worker.terminate()}catch(_){}}
   btn.disabled=false;btn.textContent="Phân tích OCR ảnh";
  }
+}
+
+function mapOCRToDashboard(){
+ const raw=document.getElementById("ocrText").value;
+ if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
+ // Detect a clearly labeled total only; never infer staff or competition values from unlabelled numbers.
+ const norm=raw.replace(/,/g,".").replace(/\s+/g," ");
+ const findLabel=(patterns)=>{for(const re of patterns){const m=norm.match(re);if(m){let n=Number(m[1].replace(/\./g,""));if(Number.isFinite(n))return n}}return null};
+ const total=findLabel([/(?:DThu|DT|Doanh thu)\s*(?:QĐ|quy đổi)?\s*(?:tổng|toàn cửa hàng)?\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i,/(?:Tổng\s*DThu\s*QĐ)\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i]);
+ if(total!==null){staff.length=0; /* preserve staff until explicit employee rows are reviewed */ document.getElementById("total").textContent=fmt(total); alert("Đã nhận diện tổng DThu QĐ ≈ "+fmt(total)+". Chỉ cập nhật KPI hiển thị; nhân viên/thi đua chưa tự map để tránh sai.");}
+ else alert("OCR chưa tìm thấy dòng có nhãn DThu QĐ tổng rõ ràng. Không tự map số không có nhãn.");
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
