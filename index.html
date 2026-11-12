@@ -64,14 +64,12 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
+<div class="panel" style="margin:12px 0;padding:14px;border:1px solid #dbe3ef;border-radius:12px">
+<strong>Nhập KPI cửa hàng đã đối chiếu (triệu đồng)</strong>
+<div class="actions" style="margin-top:8px"><input id="verifiedStoreSales" type="number" min="0" placeholder="DT QĐ cửa hàng" style="max-width:180px"><input id="verifiedStoreGift" type="number" min="0" placeholder="DT trả góp QĐ" style="max-width:180px"><button class="btn" onclick="applyVerifiedStore()">Cập nhật KPI đã xác minh</button></div>
+<small>Chỉ nhập số lấy từ dòng tổng báo cáo cửa hàng; không lấy tổng cộng nhân viên.</small></div>
 <div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Map DThu QĐ tổng</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
 <div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
-<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px">
- <div><label for="verifiedStoreSales">DThu QĐ tổng đã đối chiếu ảnh (triệu)</label><input id="verifiedStoreSales" type="number" min="0" step="0.01" placeholder="Nhập đúng ô báo cáo"></div>
- <div><label for="verifiedStoreGift">DThu góp tổng đã đối chiếu ảnh (triệu)</label><input id="verifiedStoreGift" type="number" min="0" step="0.01" placeholder="Nhập đúng ô báo cáo"></div>
-</div>
-<div class="actions"><button class="btn" onclick="applyVerifiedStore()">Xác nhận số tổng đã đối chiếu</button></div>
-<small>Chỉ cập nhật KPI tổng khi bạn nhập số đã kiểm tra trực tiếp trên ảnh; không lấy số OCR phỏng đoán.</small>
 <textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
 <small>OCR đọc chữ. Nút Map chỉ nhận DThu QĐ tổng có nhãn rõ; dữ liệu nhân viên/thi đua cần bảng đối chiếu xác nhận, không tự đoán.</small></div></div>
  </div>
@@ -80,35 +78,32 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 </div>
 <script>
 const staff=[
- {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:87,gift:82,target:60},
- {user:"168190",name:"Nguyễn Văn Ngoan",sales:68,gift:58,target:60},
- {user:"179512",name:"Phạm Văn Thuận",sales:28,gift:0,target:60},
- {user:"258196",name:"Lê Xuân Hải",sales:26,gift:0,target:60},
- {user:"281312",name:"Nguyễn Công Toàn",sales:16,gift:0,target:60},
- {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:60},
- {user:"71995",name:"Đặng Thị Thảo Trinh",sales:9,gift:0,target:60},
- {user:"18868",name:"Nguyễn Thị Lý",sales:6,gift:0,target:60},
- {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:60},
- {user:"111566",name:"Nguyễn Nhật Minh",sales:0,gift:0,target:60}
+ {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:84,gift:82,target:100},
+ {user:"258196",name:"Lê Xuân Hải",sales:15,gift:0,target:35},
+ {user:"179512",name:"Phạm Văn Thuận",sales:13,gift:0,target:30},
+ {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:25},
+ {user:"281312",name:"Nguyễn Công Toàn",sales:0,gift:0,target:25},
+ {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25}
 ];
 const races=[
- ["Điện tử Samsung",0,3.47],["CE LG",26.13,9.73],["Tivi TCL",7.82,1.61],
- ["Máy Lạnh",0,2],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],["Máy nước nóng",0,1],
- ["Máy sấy / Máy rửa chén",0,1.13],["Quạt gió",0,0.83],["Điện tử",7.82,17.63],
- ["Nồi cơm & Nồi chiên",6.46,3.90],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy giặt",31.44,13.22],["Máy lọc nước",25.69,7.27],
+ ["Điện tử Samsung",0,3.47],["CE LG",14.90,9.73],["Tivi TCL",7.82,1.61],
  ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
- ["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],["Sim",0,2],["Sim ĐMX",0,1],
- ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Trả chậm Homecredit",13.98,69.23],
- ["VAS",17,9],["Nạp rút",5,8],["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
- ["Trả chậm FECREDIT, SAMSUNG F+, SHINHAN, MCREDIT",78.62,23.10],
- ["Camera",0,1],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
+ ["Camera",0,1.00],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
  ["Điện thoại Vivo",0,1.67],["Đồng hồ & Smartwatch",0,1.87],["Laptop",0,2.79],
- ["Loa Phụ Kiện",0,0.93],["Phụ kiện công nghệ",0,0.11],
- ["ĐIỆN THOẠI & TABLET ANDROID",6.75,42.73],["Tai nghe",0.32,0.86],
- ["Phụ kiện khác IT & Nhóm khác",3.35,5.60],["Sạc dự phòng",0.50,0.82],["Cáp sạc",0.87,0.72]
+ ["Loa Phụ Kiện",0,0.93],["Máy Lạnh",0,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],
+ ["Máy nước nóng",0,1.00],["Máy sấy / Máy rửa chén",0,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],
+ ["Phụ kiện công nghệ",0,0.11],["Quạt gió",0,0.83],["Sim",0,2.00],["Sim ĐMX",0,1.00],
+ ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Phụ kiện khác IT & Nhóm khác",0.30,5.60],
+ ["ĐIỆN THOẠI & TABLET ANDROID",3.32,42.73],["Trả chậm Homecredit",13.98,69.23],
+ ["Cáp sạc",0.15,0.72],["VAS",2,9],["Tai nghe",0.20,0.86],["Sạc dự phòng",0.23,0.82],
+ ["Nạp rút",3,8],["Nồi cơm & Nồi chiên",1.54,3.90],["Điện tử",7.82,17.63],
+ ["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
+ ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
+ ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
 ];
-let storeTarget=400, staffTargetDefault=60, storeSales=257, storeGift=141;
-const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SHINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
+// STORE KPI phải độc lập với tổng nhân viên; chỉ cập nhật khi nhập/đối chiếu báo cáo cửa hàng.
+let storeSales=0, storeGift=0, storeTarget=190, staffTargetDefault=25;
+const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
  document.getElementById(id).innerHTML=rows.map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
@@ -129,6 +124,14 @@ function render(){
   let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
+}
+function applyVerifiedStore(){
+ const a=document.getElementById("verifiedStoreSales").value;
+ const b=document.getElementById("verifiedStoreGift").value;
+ if(a===""||b===""){alert("Nhập đủ DT QĐ cửa hàng và DT trả góp QĐ.");return}
+ storeSales=Number(a);storeGift=Number(b);
+ render();
+ alert("Đã cập nhật KPI cửa hàng độc lập. Hãy kiểm tra lại với báo cáo nguồn.");
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
@@ -182,15 +185,9 @@ async function runOCR(){
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value.trim();
  if(!raw){alert("Chưa có kết quả OCR.");return}
- document.getElementById("ocrStatus").textContent="OCR đã nhận chữ, nhưng chưa map vào dashboard. Cần xác nhận số liệu theo đúng ô trên ảnh gốc.";
- alert("Đã chặn map tự động để tránh sai số liệu. OCR text không xác định chắc chắn cột/hàng; dashboard chưa bị thay đổi.");
-}
-function applyVerifiedStore(){
- const a=document.getElementById("verifiedStoreSales").value,b=document.getElementById("verifiedStoreGift").value;
- if(a===""||b===""){alert("Nhập đủ DThu QĐ tổng và DThu góp tổng đã đối chiếu ảnh.");return}
- const x=Number(a),y=Number(b);if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||y<0){alert("Số liệu không hợp lệ.");return}
- storeSales=x;storeGift=y;render();
- document.getElementById("ocrStatus").textContent="Đã cập nhật KPI tổng từ số bạn xác nhận đối chiếu ảnh. Nhân viên/CE/DV/ICT vẫn chưa tự map.";
+ // OCR text-only không đủ cấu trúc để xác định đúng hàng/cột.
+ // Không đẩy dữ liệu chưa kiểm chứng vào dashboard.
+ alert("OCR đã đọc văn bản, nhưng chưa map tự động. Cần đối chiếu đúng bảng/hàng/cột trước khi cập nhật dashboard. Dữ liệu hiện tại được giữ nguyên để tránh sai.");
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
