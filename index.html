@@ -134,12 +134,16 @@ async function runOCR(){
  try{
   st.textContent="Đang tải OCR engine…";
   if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";s.onload=ok;s.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(s)});
-  worker=await Tesseract.createWorker("vie+eng",1,{logger:m=>st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%",workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js",langPath:"https://tessdata.projectnaptha.com/4.0.0",gzip:true});
+  worker=await Tesseract.createWorker("vie+eng",1,{
+    logger:m=>{st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"}
+  });
   for(let i=0;i<fs.length;i++){st.textContent=`Đọc ảnh ${i+1}/${fs.length}: ${fs[i].name}`;const c=await preprocessImage(fs[i]);const r=await worker.recognize(c);all.push({name:fs[i].name,text:r.data.text||"",confidence:r.data.confidence||0})}
   document.getElementById("ocrText").textContent=all.map(x=>x.text).join("\n");const res=applyOCRAutomatically(all);
   st.textContent=`OCR hoàn tất ${fs.length} ảnh • confidence trung bình ${res.confidence.toFixed(0)}%`;
   document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ NHẬN DIỆN: ${res.staff} nhân viên • ${res.race} chương trình</b><p style="font-size:12px;color:#64748b">${esc(res.note)}</p><details><summary>Xem nội dung OCR gốc</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px">${esc(all.map(x=>"=== "+x.name+" ===\n"+x.text).join("\n\n"))}</pre></details></div>`;setMappingStatus(res.note,true)
- }catch(e){st.textContent="OCR lỗi: "+(e.message||e);setMappingStatus("OCR chưa hoàn tất. Dashboard không được cập nhật.",false);alert("OCR lỗi: "+(e.message||e))}
+ }catch(e){st.textContent="OCR KHÔNG CHẠY: "+(e.message||e);
+  document.getElementById("ocrResult").innerHTML='<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>OCR thất bại.</b><br>'+esc(e.message||String(e))+'<br>Kiểm tra kết nối mạng/CDN hoặc tải lại trang. Dashboard chưa cập nhật.</div>';
+  setMappingStatus("OCR chưa hoàn tất. Dashboard không được cập nhật.",false)}
  finally{if(worker)try{await worker.terminate()}catch(_){}btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}
 }
 function applyOCRAutomatically(files){
