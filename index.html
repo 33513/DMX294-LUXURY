@@ -60,7 +60,7 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
  <div class="data-grid">
   <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value=""><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
   <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
-  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tự động V9</span></div><div class="formbox">
+  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tự động V10</span></div><div class="formbox">
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
@@ -116,16 +116,31 @@ function nval(s){let z=String(s||"").replace(/[^0-9.,-]/g,"");if(!z)return null;
 function groupWords(words){const ws=(words||[]).filter(w=>w.text&&w.bbox&&w.confidence>15).map(w=>({t:w.text.trim(),x:(w.bbox.x0+w.bbox.x1)/2,y:(w.bbox.y0+w.bbox.y1)/2,x0:w.bbox.x0,x1:w.bbox.x1,y0:w.bbox.y0,y1:w.bbox.y1}));ws.sort((a,b)=>a.y-b.y||a.x-b.x);let rows=[];for(const w of ws){let r=rows.find(r=>Math.abs(r.y-w.y)<Math.max(12,(w.y1-w.y0)*.6));if(!r){r={y:w.y,words:[]};rows.push(r)}r.words.push(w);r.y=r.words.reduce((a,b)=>a+b.y,0)/r.words.length}return rows.sort((a,b)=>a.y-b.y).map(r=>({...r,words:r.words.sort((a,b)=>a.x-b.x),text:r.words.map(w=>w.t).join(" ")}))}
 function parseStore(text,words,imageWidth,imageHeight){
  const W=imageWidth||2640,H=imageHeight||3224;
- const center=w=>({x:((w.bbox.x0+w.bbox.x1)/2)/W,y:((w.bbox.y0+w.bbox.y1)/2)/H,t:String(w.text||"").trim()});
- const numeric=(words||[]).map(center).filter(w=>/^-?\d+(?:[.,]\d+)?$/.test(w.t)).map(w=>({...w,v:nval(w.t)}));
- // Store KPI "DT quy đổi" is the large number in the upper-left tile (30), not OCR's stray icon 42.
- const sales=numeric.filter(w=>w.x<.13&&w.y>.07&&w.y<.18).sort((a,b)=>a.y-b.y)[0]?.v??null;
+ const center=w=>({x:((w.bbox.x0+w.bbox.x1)/2)/W,y:((w.bbox.y0+w.bbox.y1)/2)/H,t:String(w.text||"").trim(),conf:Number(w.confidence||0)});
+ const all=(words||[]).map(center).filter(w=>w.t&&Number.isFinite(w.x)&&Number.isFinite(w.y));
+ const numeric=all.filter(w=>/^-?\d+(?:[.,]\d+)?$/.test(w.t)).map(w=>({...w,v:nval(w.t)})).filter(w=>Number.isFinite(w.v));
  const t=norm(text).replace(/\s+/g," ");
- const mt=t.match(/target ngay\s*(\d+(?:[.,]\d+)?)/);
- // Installment tile is in the lower-right KPI area; value may OCR as "0/30".
- const giftWord=(words||[]).map(center).find(w=>w.x>.65&&w.x<.9&&w.y>.70&&w.y<.82&&/\d+\s*\/\s*\d+/.test(w.t));
- const gift=giftWord?nval(giftWord.t.split("/")[0]):null;
- return {sales,target:mt?nval(mt[1]):null,gift};
+ // Target ngày lấy từ nhãn KPI, ưu tiên regex có ngữ cảnh thay vì lấy số bất kỳ.
+ let target=null;
+ const mt=t.match(/target\s*ngay\s*(?:\D{0,12})?(\d+(?:[.,]\d+)?)/);
+ if(mt)target=nval(mt[1]);
+ // DT quy đổi là KPI đầu tiên (ô trên-trái). Tìm số trong vùng card, tránh vùng target và dự kiến ngày.
+ let salesCandidates=numeric.filter(w=>w.x>=.015&&w.x<.47&&w.y>=.045&&w.y<.235);
+ // loại số nhỏ kiểu icon/nhãn và chọn số nằm dưới nhãn DT quy đổi (thường ở hàng giá trị KPI)
+ salesCandidates=salesCandidates.filter(w=>w.v>=0&&w.v<1000000);
+ let sales=null;
+ if(salesCandidates.length){
+   // KPI value nằm thấp hơn nhãn trong ô đầu tiên; số có confidence tốt và gần vùng trung tâm card.
+   salesCandidates.sort((a,b)=> (Math.abs(a.y-.105)*2+Math.abs(a.x-.12))-(Math.abs(b.y-.105)*2+Math.abs(b.x-.12)) || b.conf-a.conf);
+   sales=salesCandidates[0].v;
+ }
+ // Fallback có ngữ cảnh OCR: số ngay sau cụm DT quy đổi; chỉ dùng khi tọa độ không tìm thấy.
+ if(sales==null){const m=t.match(/dt\s*quy\s*doi\s*(\d+(?:[.,]\d+)?)/);if(m)sales=nval(m[1]);}
+ // DT trả góp trong card cuối: số đầu của dạng x/y; không suy diễn nếu không có.
+ let gift=null;
+ const giftCandidates=all.filter(w=>w.x>.55&&w.x<.98&&w.y>.68&&w.y<.95&&/\d+\s*\/\s*\d+/.test(w.t));
+ if(giftCandidates.length){const m=giftCandidates.sort((a,b)=>a.y-b.y)[0].t.match(/(\d+(?:[.,]\d+)?)\s*\//);if(m)gift=nval(m[1]);}
+ return {sales,target,gift};
 }
 function parseStaff(rows,imageWidth){
  const W=imageWidth||1320, out=[], seen=new Set();
@@ -167,7 +182,7 @@ async function runOCR(){
   if(!window.Tesseract)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";sc.onload=ok;sc.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(sc)});
   worker=await Tesseract.createWorker("vie+eng",1,{logger:m=>st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"});
   for(let i=0;i<fs.length;i++){st.textContent=`OCR ảnh ${i+1}/5: ${fs[i].name}`;const c=await preprocessImage(fs[i],2);const r=await worker.recognize(c);results.push({file:fs[i],text:r.data.text||"",words:r.data.words||[],confidence:r.data.confidence||0,width:c.width,height:c.height})}
-  // V9: Phân loại theo thứ tự ảnh người dùng đã chọn (đúng quy trình báo cáo 5 ảnh):
+  // V10: Phân loại theo thứ tự ảnh người dùng đã chọn (đúng quy trình báo cáo 5 ảnh):
   // 1 Tổng siêu thị | 2 Nhân viên | 3 CE | 4 DV | 5 ICT.
   // Không dùng OCR tiêu đề để quyết định vai trò ảnh vì OCR tiếng Việt dễ sai dấu/ký tự.
   const store=results[0], employee=results[1], raceImages=results.slice(2,5);
@@ -181,7 +196,7 @@ async function runOCR(){
   if(!employeeLooks)throw Error(`Ảnh 2 (${employee.file.name}) không có dấu hiệu bảng nhân viên. Hãy chọn đúng thứ tự ảnh.`);
   if(raceLooks.filter(Boolean).length<2)throw Error(`Ảnh 3–5 (${raceImages.map(x=>x.file.name).join(", ")}) không đủ dấu hiệu bảng thi đua. Hãy chọn CE, DV, ICT theo đúng thứ tự.`);
   const sp=parseStore(store.text,store.words,store.width,store.height),sr=parseStaff(groupWords(employee.words),employee.width),rr=raceImages.map(x=>parseRace(groupWords(x.words),x.width));
-  if(sp.sales==null||sp.target==null||sr.length<8||rr.some(a=>a.length<8))throw Error(`Dữ liệu chưa đủ tin cậy: tổng=${sp.sales}, target=${sp.target}, NV=${sr.length}, CE/DV/ICT=${rr.map(a=>a.length).join("/")}. Không ghi đè dashboard.`);
+  if(sp.sales==null||sp.target==null||sr.length<8||rr.some(a=>a.length<8))throw Error(`Dữ liệu chưa đủ tin cậy: DT quy đổi=${sp.sales}, Target ngày=${sp.target}, NV=${sr.length}, CE/DV/ICT=${rr.map(a=>a.length).join("/")}. Không ghi đè dashboard.`);
   // Thứ tự ảnh 3/4/5 được quy ước CE/DV/ICT; không phân loại lại bằng OCR tên chương trình.
   const ceIndex=0,dvIndex=1,ictIndex=2;
   const allRaces=[...rr[ceIndex],...rr[dvIndex],...rr[ictIndex]];
