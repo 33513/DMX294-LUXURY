@@ -1,204 +1,879 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f5f7fb">
-<title>DMX • Realtime Luxury Dashboard</title>
-<style>
-:root{--bg:#f5f7fb;--card:#fff;--ink:#17233b;--muted:#77849a;--line:#e7ebf2;--blue:#2563eb;--blue2:#60a5fa;--gold:#c6a15b;--green:#059669;--red:#dc2626;--amber:#d97706;--shadow:0 12px 32px rgba(28,48,89,.07)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 5% 0%,#eaf1ff 0,transparent 32%),radial-gradient(circle at 95% 10%,#fff4df 0,transparent 25%),var(--bg);color:var(--ink);font:15px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:1440px;margin:auto;padding:22px clamp(14px,3vw,36px) 44px}
-header{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:24px}
-.brand{display:flex;align-items:center;gap:12px}.mark{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,#1d4ed8,#60a5fa);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 8px 20px #2563eb35}.brand h1{font-size:clamp(18px,2.4vw,25px);margin:0;letter-spacing:-.6px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
-.header-right{display:flex;align-items:center;gap:10px}.live{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #bce8d7;background:#effcf6;border-radius:99px;color:#087b55;font-size:12px;font-weight:700}.dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 4px #10b98120}.stamp{color:var(--muted);font-size:12px}
-nav{display:flex;gap:8px;overflow:auto;padding:0 0 16px;scrollbar-width:none}nav a{white-space:nowrap;text-decoration:none;color:#64748b;background:#fff;border:1px solid var(--line);padding:9px 14px;border-radius:99px;font-weight:650;font-size:13px}nav a:first-child{background:#eff5ff;color:#1d4ed8;border-color:#cfe0ff}
-section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}.eyebrow{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:var(--gold);font-weight:800}.section-head h2{margin:3px 0 0;font-size:clamp(18px,2vw,23px);letter-spacing:-.5px}.section-head p{margin:0;color:var(--muted);font-size:12px}
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:13px}.kpi{position:relative;overflow:hidden;background:linear-gradient(145deg,#fff,#fbfcff);border:1px solid #e6eaf2;border-radius:19px;padding:17px 17px 15px;box-shadow:var(--shadow);min-height:145px}.kpi:after{content:"";position:absolute;right:-30px;top:-40px;width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,#dbeafe66,#fff0)}.k-label{font-size:12px;color:#68768d;font-weight:700;display:flex;align-items:center;gap:8px}.ico{width:27px;height:27px;border-radius:9px;background:#edf4ff;color:#2563eb;display:grid;place-items:center;font-size:14px}.k-value{font-size:clamp(24px,3vw,34px);font-weight:850;letter-spacing:-1.2px;margin:13px 0 5px;line-height:1.1}.k-foot{font-size:11px;color:#8b97aa}.kpi.gold .ico{background:#fbf5e9;color:#b58a35}.kpi.green .ico{background:#e9fbf3;color:#059669}.kpi.red .ico{background:#fff0f0;color:#dc2626}
-.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.panel-top{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--line)}.panel-top h3{margin:0;font-size:15px}.pill{font-size:11px;padding:5px 9px;border-radius:99px;background:#eff5ff;color:#2563eb;font-weight:750}
-.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formbox{padding:17px}.formbox label{display:block;font-size:12px;color:#64748b;font-weight:700;margin-bottom:7px}.formbox input{width:100%;padding:12px;border:1px solid #dce3ee;border-radius:12px;background:#fbfcff;color:var(--ink);font:inherit;outline:none}.formbox input:focus{border-color:#93b4ff;box-shadow:0 0 0 3px #2563eb12}.formbox small{display:block;color:#9aa5b6;margin-top:6px;font-size:11px}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:0;background:linear-gradient(135deg,#2563eb,#4f8df8);color:#fff;font-weight:750;padding:11px 16px;border-radius:12px;box-shadow:0 8px 18px #2563eb25;cursor:pointer}.btn.secondary{background:#fff;color:#52627b;border:1px solid var(--line);box-shadow:none}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
-.table-wrap{overflow:auto;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:separate;border-spacing:0;min-width:760px;font-size:13px}th{background:#f8faff;color:#68768d;font-size:11px;letter-spacing:.35px;text-align:left;padding:13px 14px;white-space:nowrap;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}td{padding:13px 14px;border-bottom:1px solid #edf0f5;white-space:nowrap}tbody tr:hover{background:#f9fbff}td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}.user{font-size:11px;color:#8a96aa}.name{font-weight:750}.percent{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:#64748b}.bar{height:6px;background:#edf1f7;border-radius:99px;overflow:hidden;margin-top:6px;min-width:70px}.bar span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#60a5fa,#2563eb)}
-.race-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.race-panel{min-width:0}.race-table{min-width:0;width:100%;table-layout:fixed;font-size:10px}.race-table th{padding:7px 4px;font-size:9px;letter-spacing:0}.race-table td{padding:7px 4px;white-space:normal;overflow-wrap:anywhere}.race-table td:last-child{text-align:right;white-space:nowrap}.race-table .name{font-size:10px;line-height:1.25}.empty{padding:26px;text-align:center;color:#9aa5b6;font-size:13px}.footnote{font-size:11px;color:#8b97aa;padding:12px 16px}
-@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:1050px){.race-columns{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}}\n@media(max-width:700px){.race-columns{grid-template-columns:1fr}.race-table{font-size:12px}.race-table th{font-size:10px;padding:9px 7px}.race-table td{padding:9px 7px}.race-table .name{font-size:12px}}\n@media(max-width:650px){.wrap{padding:14px 12px 30px}header{align-items:flex-start}.brand h1{font-size:18px}.stamp{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.kpi{padding:13px;min-height:126px;border-radius:16px}.k-value{font-size:27px}.k-label{font-size:11px}.k-foot{font-size:10px}.data-grid{grid-template-columns:1fr}.section-head p{display:none}.panel{border-radius:16px}.panel-top{padding:14px}.form-row{grid-template-columns:1fr 1fr}.table-wrap{margin:0}.section-head h2{font-size:19px}}
-</style>
-</head>
-<body>
-<div class="wrap">
-<header>
- <div class="brand"><div class="mark">D</div><div><h1>DMX <span style="color:#c6a15b">LUXURY</span></h1><p>Realtime Performance • Executive Analytics</p></div></div>
- <div class="header-right"><span class="live"><span class="dot"></span> LIVE PREVIEW</span><span class="stamp" id="updated">Prototype • 11/11/2026</span></div>
-</header>
-<nav><a href="#overview">Tổng quan</a><a href="#staff">Nhân viên</a><a href="#race">Thi đua</a><a href="#settings">Data & Target</a></nav>
-<section id="overview">
- <div class="section-head"><div><div class="eyebrow">Executive overview</div><h2>01. Tổng quan doanh thu realtime</h2></div><p>Đơn vị: triệu đồng</p></div>
- <div class="kpis">
-  <div class="kpi"><div class="k-label"><span class="ico">₫</span> DThu QĐ tổng</div><div class="k-value" id="total">124</div><div class="k-foot">Doanh thu quy đổi</div></div>
-  <div class="kpi gold"><div class="k-label"><span class="ico">◎</span> Target ngày</div><div class="k-value" id="target">190</div><div class="k-foot">Mục tiêu doanh thu QĐ</div></div>
-  <div class="kpi green"><div class="k-label"><span class="ico">↗</span> % HT Target</div><div class="k-value" id="completion">65.3%</div><div class="k-foot">Tổng thực hiện / Target</div></div>
-  <div class="kpi"><div class="k-label"><span class="ico">▤</span> DThu trả góp</div><div class="k-value" id="installment">82</div><div class="k-foot">Doanh thu góp quy đổi</div></div>
-  <div class="kpi red"><div class="k-label"><span class="ico">％</span> % trả góp</div><div class="k-value" id="share">66.1%</div><div class="k-foot">Trả góp / DThu QĐ tổng</div></div>
- </div>
-</section>
-<section id="staff">
- <div class="section-head"><div><div class="eyebrow">People performance</div><h2>02. Doanh thu nhân viên realtime</h2></div><p>Màu hoàn thành so với KPI cửa hàng</p></div>
- <div class="panel"><div class="panel-top"><h3>Hiệu suất đội ngũ</h3><span class="pill" id="staffcount">3 nhân viên</span></div>
- <div class="table-wrap"><table><thead><tr><th>USER</th><th>TÊN NV</th><th style="text-align:right">DTHU QĐ</th><th style="text-align:right">DTHU GÓP</th><th style="text-align:right">TỶ TRỌNG GÓP</th><th style="text-align:right">TARGET NGÀY</th><th>% HT TARGET</th></tr></thead><tbody id="staffbody"></tbody></table></div>
- <div class="footnote">Xanh: % nhân viên cao hơn KPI tổng • Đỏ: thấp hơn KPI tổng.</div></div>
-</section>
-<section id="race">
- <div class="section-head"><div><div class="eyebrow">Category leaderboard</div><h2>03. Thi đua realtime</h2></div><p>Tiến độ từng chương trình</p></div>
- <div class="race-columns">
-  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
- </div>
- <div class="footnote">Mỗi nhóm hiển thị riêng và sắp xếp % hoàn thành Target giảm dần.</div>
-</section>
-<section id="settings">
- <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Data & Target</h2></div><p>Nhập mục tiêu để map KPI</p></div>
- <div class="data-grid">
-  <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value="190"><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
-  <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
-  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR</span></div><div class="formbox">
-<label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
-<small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
-<div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
-<div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Map DThu QĐ tổng</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
-<div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
-<div id="mappingStatus" style="padding:10px;border:1px solid #dbe3ef;border-radius:10px;margin-top:10px;font-size:12px">DATA MAPPING: Chưa chạy.</div><textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
-<small>OCR đọc chữ. Nút Map chỉ nhận DThu QĐ tổng có nhãn rõ; dữ liệu nhân viên/thi đua cần bảng đối chiếu xác nhận, không tự đoán.</small></div></div>
- </div>
-</section>
-<div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
-</div>
-<script>
-let staff=[
- {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:84,gift:82,target:100},
- {user:"258196",name:"Lê Xuân Hải",sales:15,gift:0,target:35},
- {user:"179512",name:"Phạm Văn Thuận",sales:13,gift:0,target:30},
- {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:25},
- {user:"281312",name:"Nguyễn Công Toàn",sales:0,gift:0,target:25},
- {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25}
-];
-let races=[
- ["Điện tử Samsung",0,3.47],["CE LG",14.90,9.73],["Tivi TCL",7.82,1.61],
- ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
- ["Camera",0,1.00],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
- ["Điện thoại Vivo",0,1.67],["Đồng hồ & Smartwatch",0,1.87],["Laptop",0,2.79],
- ["Loa Phụ Kiện",0,0.93],["Máy Lạnh",0,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],
- ["Máy nước nóng",0,1.00],["Máy sấy / Máy rửa chén",0,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],
- ["Phụ kiện công nghệ",0,0.11],["Quạt gió",0,0.83],["Sim",0,2.00],["Sim ĐMX",0,1.00],
- ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Phụ kiện khác IT & Nhóm khác",0.30,5.60],
- ["ĐIỆN THOẠI & TABLET ANDROID",3.32,42.73],["Trả chậm Homecredit",13.98,69.23],
- ["Cáp sạc",0.15,0.72],["VAS",2,9],["Tai nghe",0.20,0.86],["Sạc dự phòng",0.23,0.82],
- ["Nạp rút",3,8],["Nồi cơm & Nồi chiên",1.54,3.90],["Điện tử",7.82,17.63],
- ["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
- ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
- ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
-];
-let storeSalesQd=null, storeInstallmentQd=null, storeTarget=190, staffTargetDefault=25;
-const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
-function renderRaceGroup(group,id){
- const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
- document.getElementById(id).innerHTML=rows.map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
+
+/* ============================================================
+   DMX294 LUXURY DASHBOARD — DATA ENGINE V4
+   Không dùng số liệu mẫu làm số liệu thực
+   ============================================================ */
+
+"use strict";
+
+/* ===================== 1. DATA CORE ===================== */
+
+const DMX_VERSION = "4.0.0";
+
+const DMX_STORAGE_KEY = "DMX294_LUXURY_REAL_DATA_V4";
+
+let dashboardData = {
+    version: DMX_VERSION,
+    confirmed: false,
+    updatedAt: null,
+
+    store: {
+        salesQD: null,
+        installment: null,
+        target: 190
+    },
+
+    staffTarget: 25,
+
+    staff: [],
+
+    races: {
+        CE: [],
+        DV: [],
+        ICT: []
+    }
+};
+
+let ocrWorker = null;
+
+/* ===================== 2. UTILITIES ===================== */
+
+function el(id) {
+    return document.getElementById(id);
 }
 
-function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
-function pct(a,b){return b>0?a/b*100:0}
-function render(){
- const total=storeSalesQd??0, gift=storeInstallmentQd??0, base=pct(total,storeTarget);
- document.getElementById("total").textContent=fmt(total);
- document.getElementById("target").textContent=fmt(storeTarget);
- document.getElementById("completion").textContent=base.toFixed(1)+"%";
- document.getElementById("installment").textContent=fmt(gift);
- document.getElementById("share").textContent=pct(gift,total).toFixed(1)+"%";
-  renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
- document.getElementById("staffcount").textContent=staff.length+" nhân viên";
- document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
-  let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
-  return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
- }).join("");
-}
-function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
-function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
-function resetTargets(){if(!confirm("Khôi phục dữ liệu mẫu?"))return;location.reload()}
-render();
-const reportInput=document.getElementById("reportImage");
-reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
-async function runOCR(){
- const fs=[...reportInput.files];
- if(!fs.length){alert("Bạn chưa chọn ảnh!");return}
- const st=document.getElementById("ocrStatus"),out=document.getElementById("ocrText");
- const btn=document.querySelector('button[onclick="runOCR()"]');
- btn.disabled=true;btn.textContent="Đang OCR…";out.value="";
- let worker=null;
- try{
-  st.textContent="Bước 1/3: tải bộ OCR (cần Internet)…";
-  if(!window.Tesseract){
-   await new Promise((resolve,reject)=>{
-    const s=document.createElement("script");
-    s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-    s.onload=resolve;s.onerror=()=>reject(new Error("Không tải được Tesseract.js từ CDN. Hãy kiểm tra mạng hoặc thử Chrome."));
-    document.head.appendChild(s);
-   });
-  }
-  st.textContent="Bước 2/3: tải worker, engine và dữ liệu Việt + Anh…";
-  worker=await Tesseract.createWorker("vie+eng",1,{
-   logger:m=>{st.textContent=(m.status||"Đang xử lý")+" "+Math.round((m.progress||0)*100)+"%"},
-   workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
-   corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/tesseract-core-simd.wasm.js",
-   langPath:"https://tessdata.projectnaptha.com/4.0.0",
-   gzip:true
-  });
-  let all=[];
-  for(let i=0;i<fs.length;i++){
-   st.textContent=`Bước 3/3: đọc ảnh ${i+1}/${fs.length} (${fs[i].name})…`;
-   const result=await worker.recognize(fs[i]);
-   all.push(`===== ${fs[i].name} =====\n${result.data.text||"(Không nhận dạng được chữ)"}`);
-  }
-  out.value=all.join("\n\n");
-  st.textContent="Đã OCR xong "+fs.length+" ảnh. Kết quả ở ô bên dưới.";
-  if(!out.value.trim())st.textContent="OCR chạy xong nhưng không đọc được chữ. Hãy dùng ảnh rõ, thẳng và đủ sáng.";
- }catch(e){
-  st.textContent="OCR thất bại: "+(e.message||e)+" (có thể CDN/Worker bị chặn bởi mạng hoặc trình duyệt)";
-  alert("OCR chưa chạy được. "+(e.message||e)+"\nKiểm tra Internet và thử ảnh JPG/PNG rõ nét.");
- }finally{
-  if(worker){try{await worker.terminate()}catch(_){}}
-  btn.disabled=false;btn.textContent="Phân tích OCR ảnh";
- }
+function numberValue(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    let s = String(value)
+        .trim()
+        .replace(/\s/g, "")
+        .replace(/[₫đĐ]/g, "");
+
+    if (!s) return null;
+
+    // 1.234,56 => 1234.56
+    if (s.includes(",") && s.includes(".")) {
+        s = s.replace(/\./g, "").replace(",", ".");
+    }
+    // 1,23 => 1.23
+    else if (s.includes(",")) {
+        s = s.replace(",", ".");
+    }
+
+    const n = Number(s);
+
+    return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
-function parseValueNearLabel(norm,label){
- // Strict: only accept a numeric value immediately after the KPI label on the same OCR line.
- // Never scan arbitrary nearby numbers (37, 113, 19.6%, etc.) as store revenue.
- const lines=norm.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- for(const line of lines){
-  const at=line.search(label);
-  if(at<0)continue;
-  const tail=line.slice(at+line.match(label)[0].length).trim();
-  const m=tail.match(/^[-:|]?\s*(\d{1,6}(?:[.,]\d{1,2})?)(?=\s|$)/);
-  if(!m)continue;
-  const value=Number(m[1].replace(",","."));
-  if(Number.isFinite(value)&&value>=0&&value<=100000)return value;
- }
- return null;
+function fmt(value) {
+    if (value === null || value === undefined) return "—";
+
+    return Number(value).toLocaleString("vi-VN", {
+        maximumFractionDigits: 2
+    });
 }
-function mapOCRToDashboard(){
- const raw=document.getElementById("ocrText").value;
- if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
- const norm=raw.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[đĐ]/g,"d").replace(/[,:;]/g," ").replace(/\\s+/g," ").toLowerCase();
- const totalLabels=[/dt\\s+quy\\s+doi\\s+tong/,/doanh\\s+thu\\s+quy\\s+doi\\s+tong/];
- const installmentLabels=[/dt\\s+tra\\s+gop\\s+quy\\s+doi/,/doanh\\s+thu\\s+tra\\s+gop\\s+quy\\s+doi/,/dt\\s+tra\\s+gop\\s+tong/];
- let total=null,gift=null;
- for(const label of totalLabels){total=parseValueNearLabel(norm,label);if(total!==null)break}
- for(const label of installmentLabels){gift=parseValueNearLabel(norm,label);if(gift!==null)break}
- if(total===null&&gift===null){document.getElementById("mappingStatus").textContent="DATA MAPPING: Không tìm thấy nhãn KPI rõ. Không cập nhật.";alert("Không tìm thấy số nằm ngay sau nhãn KPI trên cùng dòng OCR. Dashboard không thay đổi để tránh lấy nhầm số.");return}
- if(total!==null)storeSalesQd=total;if(gift!==null)storeInstallmentQd=gift;render();
- const msg=[];if(total!==null)msg.push("DT QĐ tổng "+fmt(total));if(gift!==null)msg.push("DT trả góp "+fmt(gift));
- document.getElementById("mappingStatus").textContent="DATA MAPPING: Map theo nhãn + số cùng dòng: "+msg.join(" • ")+"; % trả góp tự tính. Nhân viên/thi đua chưa tự map.";
- alert("Đã map "+msg.join(" • ")+". Vui lòng đối chiếu ảnh gốc.");
+
+function pct(actual, target) {
+    if (
+        actual === null ||
+        target === null ||
+        target <= 0
+    ) {
+        return null;
+    }
+
+    return actual / target * 100;
 }
-function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
-</script>
-</body></html>
+
+function pctText(value) {
+    return value === null ? "—" : value.toFixed(1) + "%";
+}
+
+function safeText(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function setStatus(message, success = false) {
+    const box = el("mappingStatus");
+
+    if (!box) return;
+
+    box.textContent = message;
+
+    box.style.color = success ? "#059669" : "#64748b";
+}
+
+/* ===================== 3. SAVE / LOAD ===================== */
+
+function saveDashboardData() {
+    dashboardData.updatedAt = new Date().toISOString();
+
+    try {
+        localStorage.setItem(
+            DMX_STORAGE_KEY,
+            JSON.stringify(dashboardData)
+        );
+    } catch (error) {
+        console.error("Không lưu được dữ liệu:", error);
+    }
+}
+
+function loadDashboardData() {
+    try {
+        const raw = localStorage.getItem(DMX_STORAGE_KEY);
+
+        if (!raw) return;
+
+        const saved = JSON.parse(raw);
+
+        if (!saved || saved.version !== DMX_VERSION) {
+            return;
+        }
+
+        dashboardData = {
+            ...dashboardData,
+            ...saved
+        };
+
+        dashboardData.store = {
+            ...dashboardData.store,
+            ...(saved.store || {})
+        };
+
+        dashboardData.races = {
+            CE: saved.races?.CE || [],
+            DV: saved.races?.DV || [],
+            ICT: saved.races?.ICT || []
+        };
+
+        dashboardData.staff = Array.isArray(saved.staff)
+            ? saved.staff
+            : [];
+
+    } catch (error) {
+        console.error("Lỗi đọc dữ liệu:", error);
+    }
+}
+
+/* ===================== 4. VALIDATION ===================== */
+
+function validateStaff(list) {
+    if (!Array.isArray(list)) {
+        throw new Error("Danh sách nhân viên không hợp lệ.");
+    }
+
+    const seen = new Set();
+
+    return list.map((item, index) => {
+        const user = String(item.user || "").trim();
+        const name = String(item.name || "").trim();
+
+        if (!user || !name) {
+            throw new Error(
+                "Nhân viên dòng " + (index + 1) +
+                " thiếu USER hoặc tên."
+            );
+        }
+
+        if (seen.has(user)) {
+            throw new Error("USER bị trùng: " + user);
+        }
+
+        seen.add(user);
+
+        const sales = numberValue(item.sales);
+        const gift = numberValue(item.gift);
+
+        if (sales === null || gift === null) {
+            throw new Error(
+                "Doanh thu nhân viên " + name +
+                " không hợp lệ."
+            );
+        }
+
+        return {
+            user,
+            name,
+            sales,
+            gift
+        };
+    });
+}
+
+function validateRaces(list) {
+    if (!Array.isArray(list)) {
+        throw new Error("Danh sách thi đua không hợp lệ.");
+    }
+
+    const seen = new Set();
+
+    return list.map((item, index) => {
+        const name = String(item.name || "").trim();
+
+        if (!name) {
+            throw new Error(
+                "Thi đua dòng " + (index + 1) +
+                " chưa có tên."
+            );
+        }
+
+        if (seen.has(name)) {
+            throw new Error("Tên thi đua trùng: " + name);
+        }
+
+        seen.add(name);
+
+        const actual = numberValue(item.actual);
+        const target = numberValue(item.target);
+
+        if (actual === null || target === null) {
+            throw new Error(
+                "Thi đua " + name +
+                " thiếu thực hiện hoặc Target."
+            );
+        }
+
+        return {
+            name,
+            actual,
+            target
+        };
+    });
+}
+
+/* ===================== 5. STORE KPI ===================== */
+
+function renderStore() {
+    const store = dashboardData.store;
+
+    const total = store.salesQD;
+    const installment = store.installment;
+    const target = store.target;
+
+    el("total").textContent = fmt(total);
+    el("target").textContent = fmt(target);
+
+    el("completion").textContent =
+        pctText(pct(total, target));
+
+    el("installment").textContent =
+        fmt(installment);
+
+    el("share").textContent =
+        pctText(pct(installment, total));
+
+    // Không có dữ liệu thì hiển thị dấu —
+    if (total === null) {
+        el("completion").textContent = "—";
+    }
+
+    if (installment === null || total === null || total === 0) {
+        el("share").textContent = "—";
+    }
+}
+
+/* ===================== 6. STAFF ===================== */
+
+function renderStaff() {
+    const tbody = el("staffbody");
+
+    if (!dashboardData.staff.length) {
+        tbody.innerHTML =
+            '<tr><td colspan="7" class="empty">' +
+            'Chưa có dữ liệu nhân viên được xác nhận.' +
+            '</td></tr>';
+
+        el("staffcount").textContent = "0 nhân viên";
+        return;
+    }
+
+    const storeCompletion = pct(
+        dashboardData.store.salesQD,
+        dashboardData.store.target
+    );
+
+    const staffTarget = dashboardData.staffTarget;
+
+    const list = [...dashboardData.staff]
+        .sort((a, b) => b.sales - a.sales);
+
+    el("staffcount").textContent =
+        list.length + " nhân viên";
+
+    tbody.innerHTML = list.map(item => {
+        const done = pct(item.sales, staffTarget);
+        const share = pct(item.gift, item.sales);
+
+        let cls = "neutral";
+
+        if (done !== null && storeCompletion !== null) {
+            if (done > storeCompletion) cls = "positive";
+            else if (done < storeCompletion) cls = "negative";
+        }
+
+        const barWidth = done === null
+            ? 0
+            : Math.max(0, Math.min(done, 100));
+
+        return `
+        <tr>
+            <td class="user">${safeText(item.user)}</td>
+            <td class="name">${safeText(item.name)}</td>
+            <td class="num">${fmt(item.sales)}</td>
+            <td class="num">${fmt(item.gift)}</td>
+            <td class="num">${pctText(share)}</td>
+            <td class="num">${fmt(staffTarget)}</td>
+            <td>
+                <span class="percent ${cls}">
+                    ${pctText(done)}
+                </span>
+                <div class="bar">
+                    <span style="width:${barWidth}%"></span>
+                </div>
+            </td>
+        </tr>`;
+    }).join("");
+}
+
+/* ===================== 7. RACE ===================== */
+
+function renderRaceGroup(group, id) {
+    const tbody = el(id);
+    const list = dashboardData.races[group] || [];
+
+    if (!list.length) {
+        tbody.innerHTML =
+            '<tr><td colspan="4" class="empty">' +
+            'Chưa có dữ liệu thi đua.' +
+            '</td></tr>';
+        return;
+    }
+
+    const rows = [...list].sort((a, b) => {
+        const pa = pct(a.actual, a.target);
+        const pb = pct(b.actual, b.target);
+
+        return (pb ?? -1) - (pa ?? -1);
+    });
+
+    tbody.innerHTML = rows.map(item => {
+        const done = pct(item.actual, item.target);
+
+        let cls = "negative";
+
+        if (done !== null && done >= 100) {
+            cls = "positive";
+        }
+
+        return `
+        <tr>
+            <td class="name">${safeText(item.name)}</td>
+            <td class="num">${fmt(item.actual)}</td>
+            <td class="num">${fmt(item.target)}</td>
+            <td class="num percent ${cls}">
+                ${pctText(done)}
+            </td>
+        </tr>`;
+    }).join("");
+}
+
+/* ===================== 8. MASTER RENDER ===================== */
+
+function renderDashboard() {
+    renderStore();
+    renderStaff();
+
+    renderRaceGroup("CE", "raceCE");
+    renderRaceGroup("DV", "raceDV");
+    renderRaceGroup("ICT", "raceICT");
+
+    const stamp = el("updated");
+
+    if (stamp) {
+        stamp.textContent = dashboardData.confirmed
+            ? "DATA CONFIRMED • " +
+              new Date(dashboardData.updatedAt)
+                  .toLocaleString("vi-VN")
+            : "DATA NOT CONFIRMED";
+    }
+}
+
+/* ===================== 9. TARGET ===================== */
+
+function applyTarget() {
+    const value = numberValue(el("targetInput").value);
+
+    if (value === null) {
+        alert("Target cửa hàng không hợp lệ.");
+        return;
+    }
+
+    dashboardData.store.target = value;
+
+    renderDashboard();
+    saveDashboardData();
+
+    setStatus("Đã cập nhật Target cửa hàng.", true);
+}
+
+function applyStaffTarget() {
+    const value = numberValue(el("staffTargetInput").value);
+
+    if (value === null) {
+        alert("Target nhân viên không hợp lệ.");
+        return;
+    }
+
+    dashboardData.staffTarget = value;
+
+    renderDashboard();
+    saveDashboardData();
+
+    setStatus("Đã cập nhật Target nhân viên.", true);
+}
+
+function resetTargets() {
+    if (!confirm("Reset Target về mặc định?")) return;
+
+    dashboardData.store.target = 190;
+    dashboardData.staffTarget = 25;
+
+    el("targetInput").value = 190;
+    el("staffTargetInput").value = 25;
+
+    renderDashboard();
+    saveDashboardData();
+
+    setStatus("Đã reset Target.");
+}
+
+/* ===================== 10. IMPORT DATA JSON ===================== */
+
+/*
+Cấu trúc dữ liệu chuẩn:
+
+{
+  "store": {
+    "salesQD": 37,
+    "installment": 0,
+    "target": 190
+  },
+  "staffTarget": 25,
+  "staff": [
+    {
+      "user": "179512",
+      "name": "Phạm Văn Thuận",
+      "sales": 28,
+      "gift": 0
+    }
+  ],
+  "races": {
+    "CE": [
+      {
+        "name": "Điện tử Samsung",
+        "actual": 3.47,
+        "target": 10
+      }
+    ],
+    "DV": [],
+    "ICT": []
+  }
+}
+*/
+
+function importDashboardJSON(jsonText) {
+    let parsed;
+
+    try {
+        parsed = JSON.parse(jsonText);
+    } catch (error) {
+        throw new Error("JSON không đúng định dạng.");
+    }
+
+    const nextStore = {
+        salesQD: numberValue(parsed.store?.salesQD),
+        installment: numberValue(parsed.store?.installment),
+        target: numberValue(parsed.store?.target)
+    };
+
+    if (nextStore.target === null) {
+        throw new Error("Thiếu Target cửa hàng.");
+    }
+
+    const nextStaffTarget =
+        numberValue(parsed.staffTarget);
+
+    if (nextStaffTarget === null) {
+        throw new Error("Thiếu Target nhân viên.");
+    }
+
+    const nextStaff = validateStaff(parsed.staff || []);
+
+    const nextRaces = {
+        CE: validateRaces(parsed.races?.CE || []),
+        DV: validateRaces(parsed.races?.DV || []),
+        ICT: validateRaces(parsed.races?.ICT || [])
+    };
+
+    // Chỉ cập nhật khi toàn bộ dữ liệu đã qua kiểm tra
+    dashboardData.store = nextStore;
+    dashboardData.staffTarget = nextStaffTarget;
+    dashboardData.staff = nextStaff;
+    dashboardData.races = nextRaces;
+
+    dashboardData.confirmed = true;
+
+    renderDashboard();
+    saveDashboardData();
+
+    setStatus(
+        "DATA CONFIRMED • " +
+        nextStaff.length + " nhân viên • " +
+        nextRaces.CE.length + " CE • " +
+        nextRaces.DV.length + " DV • " +
+        nextRaces.ICT.length + " ICT",
+        true
+    );
+}
+
+/* ===================== 11. OCR IMAGE ===================== */
+
+const reportInput = el("reportImage");
+
+reportInput.addEventListener("change", function () {
+    const box = el("imagePreview");
+
+    box.innerHTML = "";
+
+    [...reportInput.files].forEach(file => {
+        const img = document.createElement("img");
+
+        img.src = URL.createObjectURL(file);
+        img.alt = file.name;
+
+        img.style.cssText =
+            "max-width:150px;max-height:110px;" +
+            "object-fit:contain;border:1px solid #e7ebf2;" +
+            "border-radius:10px;padding:4px";
+
+        box.appendChild(img);
+    });
+
+    el("ocrStatus").textContent =
+        reportInput.files.length + " ảnh đã chọn.";
+});
+
+async function runOCR() {
+    const files = [...reportInput.files];
+
+    if (!files.length) {
+        alert("Bạn chưa chọn ảnh!");
+        return;
+    }
+
+    const status = el("ocrStatus");
+    const output = el("ocrText");
+    const button =
+        document.querySelector('button[onclick="runOCR()"]');
+
+    button.disabled = true;
+    button.textContent = "Đang OCR…";
+
+    try {
+        status.textContent = "Đang tải OCR engine…";
+
+        if (!window.Tesseract) {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+
+                script.src =
+                    "https://cdn.jsdelivr.net/npm/" +
+                    "tesseract.js@5.1.1/dist/tesseract.min.js";
+
+                script.onload = resolve;
+
+                script.onerror = () =>
+                    reject(new Error("Không tải được OCR CDN."));
+
+                document.head.appendChild(script);
+            });
+        }
+
+        ocrWorker = await Tesseract.createWorker(
+            "vie+eng",
+            1,
+            {
+                logger: message => {
+                    status.textContent =
+                        (message.status || "OCR") + " " +
+                        Math.round((message.progress || 0) * 100) +
+                        "%";
+                }
+            }
+        );
+
+        const resultText = [];
+
+        for (let i = 0; i < files.length; i++) {
+            status.textContent =
+                "Đang OCR ảnh " + (i + 1) +
+                "/" + files.length;
+
+            const result =
+                await ocrWorker.recognize(files[i]);
+
+            resultText.push(
+                "===== " + files[i].name + " =====\n" +
+                (result.data.text || "")
+            );
+        }
+
+        output.value = resultText.join("\n\n");
+
+        status.textContent =
+            "OCR hoàn tất. Vui lòng kiểm tra nội dung.";
+    } catch (error) {
+        status.textContent =
+            "OCR lỗi: " + error.message;
+
+        alert("OCR thất bại: " + error.message);
+    } finally {
+        if (ocrWorker) {
+            try {
+                await ocrWorker.terminate();
+            } catch (_) {}
+        }
+
+        ocrWorker = null;
+
+        button.disabled = false;
+        button.textContent = "Phân tích OCR ảnh";
+    }
+}
+
+/* ===================== 12. SAFE STORE MAPPING ===================== */
+
+function normalizeText(text) {
+    return String(text || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[đĐ]/g, "d")
+        .toLowerCase();
+}
+
+function parseStrictKPI(text, labelRegex) {
+    const lines = text.split(/\r?\n/);
+
+    for (const line of lines) {
+        const match = line.match(labelRegex);
+
+        if (!match) continue;
+
+        const rest = line.slice(match.index + match[0].length);
+
+        const numberMatch = rest.match(
+            /^\s*[:\-|]?\s*(\d+(?:[.,]\d{1,2})?)/ 
+        );
+
+        if (!numberMatch) continue;
+
+        const value = numberValue(numberMatch[1]);
+
+        if (value !== null) return value;
+    }
+
+    return null;
+}
+
+function mapOCRToDashboard() {
+    const raw = el("ocrText").value;
+
+    if (!raw.trim()) {
+        alert("Chưa có kết quả OCR.");
+        return;
+    }
+
+    const text = normalizeText(raw);
+
+    // Chỉ map khi nhãn rõ và số nằm ngay sau nhãn.
+    const salesQD = parseStrictKPI(
+        text,
+        /(?:dt|doanh thu)\s+(?:qd|quy doi)\s+tong/
+    );
+
+    const installment = parseStrictKPI(
+        text,
+        /(?:dt|doanh thu)\s+tra gop\s+(?:qd|quy doi)/
+    );
+
+    if (salesQD === null && installment === null) {
+        setStatus(
+            "Không tìm thấy KPI có nhãn rõ. " +
+            "Dashboard không thay đổi."
+        );
+
+        alert(
+            "Không tìm thấy số liệu an toàn để map. " +
+            "Không cập nhật để tránh lấy nhầm."
+        );
+
+        return;
+    }
+
+    if (salesQD !== null) {
+        dashboardData.store.salesQD = salesQD;
+    }
+
+    if (installment !== null) {
+        dashboardData.store.installment = installment;
+    }
+
+    // OCR store chưa đủ để xác nhận nhân viên / thi đua.
+    dashboardData.confirmed = false;
+
+    renderDashboard();
+    saveDashboardData();
+
+    setStatus(
+        "Đã map KPI cửa hàng theo nhãn OCR. " +
+        "Nhân viên và thi đua chưa được map."
+    );
+
+    alert(
+        "Đã cập nhật KPI cửa hàng.\n" +
+        "Hãy kiểm tra lại ảnh báo cáo gốc."
+    );
+}
+
+/* ===================== 13. CLEAR OCR ===================== */
+
+function clearOCR() {
+    reportInput.value = "";
+
+    el("imagePreview").innerHTML = "";
+    el("ocrText").value = "";
+    el("ocrStatus").textContent = "Đã xóa ảnh.";
+}
+
+/* ===================== 14. EXPORT / IMPORT JSON ===================== */
+
+function exportDashboardJSON() {
+    const blob = new Blob(
+        [JSON.stringify(dashboardData, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "DMX294_REAL_DATA.json";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function downloadDataTemplate() {
+    const template = {
+        store: {
+            salesQD: 37,
+            installment: 0,
+            target: 190
+        },
+
+        staffTarget: 25,
+
+        staff: [],
+
+        races: {
+            CE: [],
+            DV: [],
+            ICT: []
+        }
+    };
+
+    const blob = new Blob(
+        [JSON.stringify(template, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "DMX294_DATA_TEMPLATE.json";
+
+    link.click();
+
+    URL.revokeObjectURL(url);
+}
+
+/* ===================== 15. RESET REAL DATA ===================== */
+
+function resetRealData() {
+    if (!confirm(
+        "Xóa toàn bộ dữ liệu đã lưu trên trình duyệt?"
+    )) return;
+
+    localStorage.removeItem(DMX_STORAGE_KEY);
+
+    dashboardData = {
+        version: DMX_VERSION,
+        confirmed: false,
+        updatedAt: null,
+
+        store: {
+            salesQD: null,
+            installment: null,
+            target: 190
+        },
+
+        staffTarget: 25,
+
+        staff: [],
+
+        races: {
+            CE: [],
+            DV: [],
+            ICT: []
+        }
+    };
+
+    renderDashboard();
+
+    setStatus("Đã xóa dữ liệu thực.");
+}
+
+/* ===================== 16. INITIALIZE ===================== */
+
+loadDashboardData();
+
+el("targetInput").value =
+    dashboardData.store.target;
+
+el("staffTargetInput").value =
+    dashboardData.staffTarget;
+
+renderDashboard();
+
+if (dashboardData.confirmed) {
+    setStatus("Đã tải dữ liệu xác nhận từ trình duyệt.", true);
+} else {
+    setStatus(
+        "Chưa có dữ liệu thực được xác nhận. " +
+        "Dashboard không sử dụng số mẫu."
+    );
+}
+
+/* ============================================================
+   END DMX294 DATA ENGINE V4
+   ============================================================ */
