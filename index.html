@@ -131,9 +131,9 @@ function parseStaff(rows,imageWidth){
  const W=imageWidth||1320, out=[], seen=new Set();
  const normX=x=>x/W;
  for(let i=0;i<rows.length;i++){
-  const r=rows[i],id=(r.text.match(/\\b\d{4,7}\\b/)||[])[0]; if(!id||seen.has(id))continue;
+  const r=rows[i],id=(r.text.match(/\b\d{4,7}\b/)||[])[0]; if(!id||seen.has(id))continue;
   // Employee ID is in the name column; choose numeric cells from the data columns near its row.
-  const nameRows=rows.filter(q=>q.y<r.y&&r.y-q.y<100&&q.words.some(w=>normX(w.x)<.30)&&! /\\b\d{4,7}\\b/.test(q.text));
+  const nameRows=rows.filter(q=>q.y<r.y&&r.y-q.y<100&&q.words.some(w=>normX(w.x)<.30)&&! /\b\d{4,7}\b/.test(q.text));
   const name=nameRows.slice(-2).map(q=>q.text).join(" ").replace(/[+]/g,"").trim();
   const nearby=rows.filter(q=>Math.abs(q.y-r.y)<105);
   const values=nearby.flatMap(q=>q.words.filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
@@ -151,7 +151,7 @@ function parseRace(rows,imageWidth){
   const actual=vals.filter(v=>v.x>=.38&&v.x<.57).sort((a,b)=>a.x-b.x)[0]?.v;
   const target=vals.filter(v=>v.x>=.56&&v.x<.75).sort((a,b)=>a.x-b.x)[0]?.v;
   if(actual==null||target==null)continue;
-  const name=r.words.filter(w=>normX(w.x)<.39&&!/^\\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
+  const name=r.words.filter(w=>normX(w.x)<.39&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
   if(!name||/chuong|thuc hien|target ngay|% ht/i.test(norm(name)))continue;
   out.push([name,actual,target]);
  }
@@ -187,7 +187,7 @@ async function runOCR(){
   // Commit only after all validation. Do not force employee sum equal store revenue (other channels/rounding can differ).
   staff=sr;races=allRaces;storeSalesQd=sp.sales;storeTarget=sp.target;storeInstallmentQd=sp.gift;persistDashboard();render();
   document.getElementById("targetInput").value=storeTarget;
-  document.getElementById("ocrText").textContent=results.map(x=>"=== "+x.file.name+" ===\\n"+x.text).join("\\n\\n");
+  document.getElementById("ocrText").textContent=results.map(x=>"=== "+x.file.name+" ===\\n"+x.text).join("\n\n");
   document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ CẬP NHẬT: ${staff.length} nhân viên • ${races.length} chương trình</b><p>DT tổng ${fmt(storeSalesQd)} • Target ${fmt(storeTarget)}. Đã qua kiểm tra cấu trúc.</p></div>`;
   st.textContent="OCR hoàn tất.";setMappingStatus("Đã cập nhật dữ liệu sau kiểm tra cấu trúc.",true)
  }catch(e){st.textContent="CHƯA CẬP NHẬT: "+(e.message||e);document.getElementById("ocrResult").innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Không cập nhật dữ liệu.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus("Không cập nhật: dữ liệu chưa qua kiểm tra.",false)}
