@@ -72,7 +72,8 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
 <div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Map DThu QĐ tổng</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
 <div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
-<div id="mappingStatus" style="padding:10px;border:1px solid #dbe3ef;border-radius:10px;margin-top:10px;font-size:12px">DATA MAPPING: Chưa chạy.</div><textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
+<div id="mappingStatus" style="padding:10px;border:1px solid #dbe3ef;border-radius:10px;margin-top:10px;font-size:12px">DATA MAPPING: Chưa chạy.</div>
+<div id="ocrReview" style="margin-top:12px"></div><textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
 <small>Mapping v2 nhận diện nhãn tổng, USER và tên chương trình; OCR dạng text có thể mất cột nên luôn cần rà kết quả trước khi chốt.</small></div></div>
  </div>
 </section>
@@ -283,11 +284,64 @@ function extractNumbers(line){
 function setMappingStatus(msg,ok=false){
  const el=document.getElementById("mappingStatus");el.style.borderColor=ok?"#b7e4ce":"#dbe3ef";el.style.background=ok?"#f0fdf6":"#fff";el.innerHTML=msg;
 }
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value.trim();
- if(!raw){alert("Chưa có kết quả OCR.");return}
- setMappingStatus("<b>OCR chỉ là văn bản tham khảo.</b><br>Không tự map vì OCR đã làm mất vị trí cột và có thể đọc sai dấu thập phân. Để cập nhật chính xác, nhập dữ liệu theo CSV ở mục NHẬP DATA CHUẨN; hệ thống chỉ map theo cột actual/gift/target đã xác định.",false);
- alert("Không map tự động để tránh sai số. Dùng NHẬP DATA CHUẨN (CSV) theo đúng cột báo cáo.");
+ if(!raw){alert("Chưa có kết quả OCR. Hãy chọn ảnh và bấm Phân tích OCR ảnh.");return}
+ // Extract candidate records from OCR text. Every candidate is displayed editable; never silently applied.
+ const lines=raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+ const candidates={total:null,installment:null,staff:[],race:[]};
+ const knownStaff=[...staff];
+ const knownRace=[...races.map(r=>r[0])];
+ const norm=normalizeText;
+ const numRE=/\d[\d.,]*/g;
+ const nums=s=>(s.match(numRE)||[]).map(parseVNNumber).filter(n=>n!==null);
+ const findStaff=line=>knownStaff.find(x=>line.includes(x.user)||norm(line).includes(norm(x.name)));
+ const findRace=line=>knownRace.find(n=>norm(line).includes(norm(n))||norm(n).includes(norm(line)));
+ for(const line of lines){
+   const ns=nums(line); if(!ns.length)continue;
+   const sl=findStaff(line);
+   if(sl){const staffNums=ns.filter(v=>String(Math.trunc(v))!==String(sl.user));candidates.staff.push({user:sl.user,name:sl.name,sales:staffNums[0]??0,gift:staffNums[1]??0,target:sl.target??staffTargetDefault,source:line});continue}
+   const rp=findRace(line);
+   if(rp){candidates.race.push({program:rp,actual:ns[0]??0,target:ns[1]??(races.find(r=>r[0]===rp)?.[2]??0),source:line});continue}
+   const n=norm(line);
+   if(/doanh thu quy doi|dt quy doi|tong doanh thu|doanh thu qd/.test(n)){candidates.total=ns[0]}
+   if(/tra gop|dt tra gop|doanh thu gop/.test(n)){candidates.installment=ns[0]}
+ }
+ window.__OCR_CANDIDATES__=candidates;
+ renderOCRReview(candidates);
+ setMappingStatus("<b>Đã tạo bảng trích xuất nháp.</b> Số liệu chưa được ghi vào Dashboard. Vui lòng rà từng dòng với ảnh gốc, sửa ô sai hoặc bỏ dòng không đúng; chỉ bấm XÁC NHẬN khi đối chiếu xong.",false);
+}
+function renderOCRReview(c){
+ const host=document.getElementById("ocrReview");
+ const n=(v)=>Number.isFinite(Number(v))?Number(v):0;
+ host.innerHTML=`<div class="panel" style="padding:14px">
+ <h3 style="margin:0 0 10px">RÀ SOÁT DATA OCR — CHƯA ÁP DỤNG</h3>
+ <p style="font-size:12px;color:#64748b">Các ô bên dưới có thể chỉnh sửa. OCR không tự đảm bảo chính xác; đối chiếu ảnh gốc trước khi xác nhận.</p>
+ <div class="form-row"><label>Doanh thu QĐ tổng<input id="rvTotal" type="number" step="0.01" value="${c.total??""}"></label><label>Doanh thu trả góp QĐ<input id="rvGift" type="number" step="0.01" value="${c.installment??""}"></label></div>
+ <h4>Nhân viên (${c.staff.length} dòng OCR nhận diện)</h4><div style="overflow:auto"><table class="data-table"><thead><tr><th>USER</th><th>Tên</th><th>DT QĐ</th><th>DT góp</th><th>Target</th><th>OCR gốc</th></tr></thead><tbody id="rvStaff">${c.staff.map((x,i)=>`<tr><td>${esc(x.user)}</td><td>${esc(x.name)}</td><td><input data-s="${i}" data-k="sales" type="number" step=".01" value="${x.sales}"></td><td><input data-s="${i}" data-k="gift" type="number" step=".01" value="${x.gift}"></td><td><input data-s="${i}" data-k="target" type="number" step=".01" value="${x.target}"></td><td style="min-width:200px;font-size:11px">${esc(x.source)}</td></tr>`).join("")}</tbody></table></div>
+ <h4>Thi đua (${c.race.length} dòng OCR nhận diện)</h4><div style="overflow:auto"><table class="data-table"><thead><tr><th>Chương trình</th><th>Thực hiện</th><th>Target</th><th>OCR gốc</th></tr></thead><tbody id="rvRace">${c.race.map((x,i)=>`<tr><td>${esc(x.program)}</td><td><input data-r="${i}" data-k="actual" type="number" step=".01" value="${x.actual}"></td><td><input data-r="${i}" data-k="target" type="number" step=".01" value="${x.target}"></td><td style="min-width:200px;font-size:11px">${esc(x.source)}</td></tr>`).join("")}</tbody></table></div>
+ <div class="actions"><button class="btn" onclick="applyOCRReviewed()">XÁC NHẬN & CẬP NHẬT DASHBOARD</button><button class="btn secondary" onclick="document.getElementById('ocrReview').innerHTML=''">Hủy bản nháp</button></div>
+ <div id="ocrApplyStatus" style="margin-top:10px;font-size:12px"></div></div>`;
+}
+function applyOCRReviewed(){
+ const c=window.__OCR_CANDIDATES__;if(!c){alert("Không có bản nháp OCR.");return}
+ const total=document.getElementById("rvTotal").value,gift=document.getElementById("rvGift").value;
+ const staffRows=c.staff.map((x,i)=>({...x,sales:Number(document.querySelector(`[data-s="${i}"][data-k="sales"]`).value),gift:Number(document.querySelector(`[data-s="${i}"][data-k="gift"]`).value),target:Number(document.querySelector(`[data-s="${i}"][data-k="target"]`).value)}));
+ const raceRows=c.race.map((x,i)=>({...x,actual:Number(document.querySelector(`[data-r="${i}"][data-k="actual"]`).value),target:Number(document.querySelector(`[data-r="${i}"][data-k="target"]`).value)}));
+ if(staffRows.some(x=>![x.sales,x.gift,x.target].every(Number.isFinite))||raceRows.some(x=>![x.actual,x.target].every(Number.isFinite))){alert("Có ô số không hợp lệ. Không cập nhật.");return}
+ if(!confirm("Bạn đã đối chiếu TẤT CẢ số liệu trong bảng nháp với ảnh gốc chưa? Chỉ xác nhận nếu đúng."))return;
+ // Apply only reviewed candidates; retain unmatched rows, avoiding accidental deletion.
+ const map=new Map(staffRows.map(x=>[x.user,x]));
+ staff=staff.map(x=>map.has(x.user)?({...x,...map.get(x.user)}):x);
+ const raceMap=new Map(raceRows.map(x=>[x.program,x]));
+ races=races.map(x=>raceMap.has(x[0])?[x[0],raceMap.get(x[0]).actual,raceMap.get(x[0]).target]:x);
+ if(total!==""&&Number.isFinite(Number(total)))storeSalesQd=Number(total);
+ if(gift!==""&&Number.isFinite(Number(gift)))storeInstallmentQd=Number(gift);
+ persistDashboard();render();
+ document.getElementById("ocrApplyStatus").innerHTML="<b style='color:#059669'>Đã cập nhật và lưu.</b> Nhân viên được cập nhật: "+staffRows.length+"; chương trình: "+raceRows.length+".";
+ setMappingStatus("<b>Đã cập nhật Dashboard từ bản OCR đã rà soát.</b> Hãy đối chiếu tổng báo cáo lần cuối.",true);
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
