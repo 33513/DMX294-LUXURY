@@ -151,7 +151,7 @@ function parseStaff(rows,imageWidth){
   const idWord=words.find(w=>/^\d{4,7}$/.test(String(w.t||'').trim()));
   if(!idWord)continue;
   const id=String(idWord.t).trim(); if(seen.has(id))continue;
-  const yTol=Math.max(14,...words.map(w=>(w.y1||0)-(w.y0||0))*.55);
+  const yTol=Math.max(14,...words.map(w=>((w.y1||0)-(w.y0||0))*.55));
   const sameRow=rows.filter(q=>Math.abs(q.y-r.y)<=yTol).flatMap(q=>q.words||[]).sort((a,b)=>a.x-b.x);
   // Tên nằm ở cột tên, bên phải ID và trước cột doanh thu.
   const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.43&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
