@@ -58,7 +58,7 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <section id="settings">
  <div class="section-head"><div><div class="eyebrow">Configuration</div><h2>Data & Target</h2></div><p>Nhập mục tiêu để map KPI</p></div>
  <div class="data-grid">
-  <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value="190"><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
+  <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value=""><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
   <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
   <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tham khảo</span></div><div class="formbox">
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
@@ -72,31 +72,9 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
 </div>
 <script>
-let staff=[
- {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:null,gift:null,target:100},
- {user:"258196",name:"Lê Xuân Hải",sales:null,gift:null,target:35},
- {user:"179512",name:"Phạm Văn Thuận",sales:null,gift:null,target:30},
- {user:"56283",name:"Trần Vũ Linh",sales:null,gift:null,target:25},
- {user:"281312",name:"Nguyễn Công Toàn",sales:null,gift:null,target:25},
- {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:null,gift:null,target:25}
-];
-let races=[
- ["Điện tử Samsung",null,3.47],["CE LG",null,9.73],["Tivi TCL",null,1.61],
- ["Bảo hiểm Thọ ĐMX",null,25.90],["Bảo hiểm Thọ ICT",null,8.37],["Bảo hiểm Tổng",null,2.37],
- ["Camera",null,1.00],["Đèn năng lượng mặt trời",null,0],["Điện thoại Realme",null,2.14],
- ["Điện thoại Vivo",null,1.67],["Đồng hồ & Smartwatch",null,1.87],["Laptop",null,2.79],
- ["Loa Phụ Kiện",null,0.93],["Máy Lạnh",null,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",null,3.61],
- ["Máy nước nóng",null,1.00],["Máy sấy / Máy rửa chén",null,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",null,0],
- ["Phụ kiện công nghệ",null,0.11],["Quạt gió",null,0.83],["Sim",null,2.00],["Sim ĐMX",null,1.00],
- ["Vay tiền mặt",null,8.95],["Ví trả sau",null,6.57],["Phụ kiện khác IT & Nhóm khác",null,5.60],
- ["ĐIỆN THOẠI & TABLET ANDROID",null,42.73],["Trả chậm Homecredit",null,69.23],
- ["Cáp sạc",null,0.72],["VAS",null,9],["Tai nghe",null,0.86],["Sạc dự phòng",null,0.82],
- ["Nạp rút",null,8],["Nồi cơm & Nồi chiên",null,3.90],["Điện tử",null,17.63],
- ["Trả Chậm Điện máy & Gia dụng",null,52.38],
- ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",null,23.10],
- ["Máy giặt",null,13.22],["Tủ lạnh / Đông / Mát",null,11.75],["Máy lọc nước",null,7.27]
-];
-let storeSalesQd=null, storeInstallmentQd=null, storeTarget=190, staffTargetDefault=25;
+let staff=[];
+let races=[];
+let storeSalesQd=null, storeInstallmentQd=null, storeTarget=null, staffTargetDefault=25;
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
@@ -106,9 +84,9 @@ function renderRaceGroup(group,id){
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
 function render(){
- const total=storeSalesQd, gift=storeInstallmentQd, base=total==null?null:pct(total,storeTarget);
+ const total=storeSalesQd, gift=storeInstallmentQd, base=(total==null||storeTarget==null||storeTarget<=0)?null:pct(total,storeTarget);
  document.getElementById("total").textContent=total==null?"—":fmt(total);
- document.getElementById("target").textContent=fmt(storeTarget);
+ document.getElementById("target").textContent=storeTarget==null?"—":fmt(storeTarget);
  document.getElementById("completion").textContent=base==null?"—":base.toFixed(1)+"%";
  document.getElementById("installment").textContent=gift==null?"—":fmt(gift);
  document.getElementById("share").textContent=(gift==null||total==null||total===0)?"—":pct(gift,total).toFixed(1)+"%";
@@ -119,47 +97,34 @@ function render(){
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
 }
-function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;persistDashboard();render()}
+function applyTarget(){const v=Number(document.getElementById("targetInput").value);if(!Number.isFinite(v)||v<=0){alert("Target phải lớn hơn 0");return}storeTarget=v;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
-function resetTargets(){if(!confirm("Xóa data đã nhập và khôi phục dữ liệu mẫu?"))return;localStorage.removeItem("DMX294_DATA_V3");location.reload()}
+function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V4");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
 // FIX missing utilities in original file
 function normalizeText(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 function parseVNNumber(v){let s=String(v??"").trim().replace(/[^\d.,-]/g,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,"");else if(/\.\d{3}$/.test(s))s=s.replace(/\./g,"");return Number(s)}
 function esc(s){return String(s??"").replace(/[&<>\"']/g,c=>{if(c==="&")return "&amp;";if(c==="<")return "&lt;";if(c===">")return "&gt;";if(c==='\"')return "&quot;";return "&#39;"})}
 function setMappingStatus(msg,ok){const e=document.getElementById("mappingStatus");if(!e)return;e.textContent=(ok?"✓ ":"⚠ ")+String(msg);e.style.background=ok?"#f0fdf4":"#fff7ed";e.style.borderColor=ok?"#bbf7d0":"#fed7aa";e.style.color=ok?"#166534":"#9a3412"}
-function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V3",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn("localStorage",e)}}
-function restoreDashboard(){try{const raw=localStorage.getItem("DMX294_DATA_V3");if(!raw)return;const d=JSON.parse(raw);if(Array.isArray(d.staff))staff=d.staff;if(Array.isArray(d.races))races=d.races;if(d.storeSalesQd!==undefined)storeSalesQd=d.storeSalesQd;if(d.storeInstallmentQd!==undefined)storeInstallmentQd=d.storeInstallmentQd;if(Number.isFinite(Number(d.storeTarget)))storeTarget=Number(d.storeTarget);if(Number.isFinite(Number(d.staffTargetDefault)))staffTargetDefault=Number(d.staffTargetDefault)}catch(e){console.warn("restore",e)}}
-
-restoreDashboard();document.getElementById("targetInput").value=storeTarget;document.getElementById("staffTargetInput").value=staffTargetDefault;render();
-const reportInput=document.getElementById("reportImage");
-window.runOCR=runOCR;window.clearOCR=clearOCR;
+function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V4",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
+function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V4")||"null");if(!d)return;staff=Array.isArray(d.staff)?d.staff:[];races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
+restoreDashboard();document.getElementById("targetInput").value=storeTarget??"";document.getElementById("staffTargetInput").value=staffTargetDefault;render();
+const reportInput=document.getElementById("reportImage");window.runOCR=runOCR;window.clearOCR=clearOCR;
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
-
-function preprocessImage(file,scale=2.4){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(img,0,0,c.width,c.height);const im=x.getImageData(0,0,c.width,c.height),d=im.data;for(let i=0;i<d.length;i+=4){let g=.299*d[i]+.587*d[i+1]+.114*d[i+2];g=Math.max(0,Math.min(255,(g-105)*1.55+128));d[i]=d[i+1]=d[i+2]=g}x.putImageData(im,0,0);URL.revokeObjectURL(url);resolve(c)}catch(e){URL.revokeObjectURL(url);reject(e)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Không đọc được ảnh"))};img.src=url})}
-async function runOCR(){
- const fs=[...reportInput.files];if(!fs.length){alert("Bạn chưa chọn ảnh báo cáo.");return}
- const st=document.getElementById("ocrStatus"),btn=document.querySelector('button[onclick="runOCR()"]');if(btn){btn.disabled=true;btn.textContent="Đang OCR…";}document.getElementById("ocrResult").innerHTML="";
- let worker=null,all=[];
- try{
-  st.textContent="Đang tải OCR engine…";
-  if(!window.Tesseract)await new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";s.onload=ok;s.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(s)});
-  worker=await Tesseract.createWorker("vie+eng",1,{
-    logger:m=>{st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"}
-  });
-  for(let i=0;i<fs.length;i++){st.textContent=`Đọc ảnh ${i+1}/${fs.length}: ${fs[i].name}`;const c=await preprocessImage(fs[i]);const r=await worker.recognize(c);all.push({name:fs[i].name,text:r.data.text||"",confidence:r.data.confidence||0})}
-  document.getElementById("ocrText").textContent=all.map(x=>x.text).join("\n");const res=applyOCRAutomatically(all);
-  st.textContent=`OCR hoàn tất ${fs.length} ảnh • confidence trung bình ${res.confidence.toFixed(0)}%`;
-  document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ NHẬN DIỆN: ${res.staff} nhân viên • ${res.race} chương trình</b><p style="font-size:12px;color:#64748b">${esc(res.note)}</p><details><summary>Xem nội dung OCR gốc</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px">${esc(all.map(x=>"=== "+x.name+" ===\n"+x.text).join("\n\n"))}</pre></details></div>`;setMappingStatus(res.note,false)
- }catch(e){st.textContent="OCR KHÔNG CHẠY: "+(e.message||e);
-  document.getElementById("ocrResult").innerHTML='<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>OCR thất bại.</b><br>'+esc(e.message||String(e))+'<br>Kiểm tra kết nối mạng/CDN hoặc tải lại trang. Dashboard chưa cập nhật.</div>';
-  setMappingStatus("OCR chưa hoàn tất. Dashboard không được cập nhật.",false)}
- finally{if(worker)try{await worker.terminate()}catch(_){}if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}
-}
-function applyOCRAutomatically(files){
- const conf=files.reduce((a,b)=>a+b.confidence,0)/Math.max(files.length,1);
- // OCR plain text has no dependable column geometry. Do not mutate dashboard values from guessed number order.
- return {staff:0,race:0,confidence:conf,note:"OCR đã đọc văn bản. Chưa cập nhật số liệu dashboard vì OCR dạng text không giữ tọa độ cột; tự gán số theo thứ tự có thể làm sai doanh thu/target. Dashboard chỉ hiển thị số đã xác nhận từ nguồn dữ liệu."};
-}
+function preprocessImage(file,scale=2){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);resolve(c)}catch(e){URL.revokeObjectURL(url);reject(e)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Không đọc được ảnh"))};img.src=url})}
+const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
+function nval(s){let z=String(s||"").replace(/[^0-9.,-]/g,"");if(!z)return null;if(z.includes(".")&&z.includes(","))z=z.replace(/\./g,"").replace(",",".");else if(z.includes(","))z=z.replace(",",".");return Number(z)}
+function groupWords(words){const ws=(words||[]).filter(w=>w.text&&w.bbox&&w.confidence>15).map(w=>({t:w.text.trim(),x:(w.bbox.x0+w.bbox.x1)/2,y:(w.bbox.y0+w.bbox.y1)/2,x0:w.bbox.x0,x1:w.bbox.x1,y0:w.bbox.y0,y1:w.bbox.y1}));ws.sort((a,b)=>a.y-b.y||a.x-b.x);let rows=[];for(const w of ws){let r=rows.find(r=>Math.abs(r.y-w.y)<Math.max(12,(w.y1-w.y0)*.6));if(!r){r={y:w.y,words:[]};rows.push(r)}r.words.push(w);r.y=r.words.reduce((a,b)=>a+b.y,0)/r.words.length}return rows.sort((a,b)=>a.y-b.y).map(r=>({...r,words:r.words.sort((a,b)=>a.x-b.x),text:r.words.map(w=>w.t).join(" ")}))}
+function parseStore(text){const t=norm(text);const lines=String(text||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);const standalone=lines.map(x=>x.match(/^([\d.,]+)$/)).filter(Boolean).map(m=>nval(m[1]));const sales=standalone.length?standalone[0]:null;const targetMatch=t.match(/target ngay\s*([\d.,]+)/);const expectedMatch=t.match(/dt du kien ngay[\s\S]{0,45}?([\d.,]+)/);const giftMatch=t.match(/dt tra gop qd\s*([\d.,]+)/);return {sales,target:targetMatch?nval(targetMatch[1]):null,gift:giftMatch?nval(giftMatch[1]):0,expected:expectedMatch?nval(expectedMatch[1]):null}}
+function parseStaff(rows){const out=[];for(let i=0;i<rows.length;i++){const r=rows[i],id=(r.text.match(/\b\d{4,6}\b/)||[])[0];if(!id)continue;const nameRows=rows.slice(Math.max(0,i-2),i+1).filter(q=>q.y<r.y&&q.words.some(w=>w.x<390)&&! /\d{4,6}/.test(q.text));const name=nameRows.map(q=>q.text).join(" ").replace(/[+]/g,"").trim();const y=r.y;const near=rows.filter(q=>Math.abs(q.y-y)<90);const nums=near.flatMap(q=>q.words.filter(w=>w.x>380).map(w=>({x:w.x,t:w.t,y:q.y}))).filter(a=>nval(a.t)!=null);const pick=(a,b)=>{let z=nums.filter(v=>v.x>=a&&v.x<b).sort((u,v)=>Math.abs(u.y-y)-Math.abs(v.y-y))[0];return z?nval(z.t):null};out.push({user:id,name:name||("USER "+id),sales:pick(500,650),gift:pick(950,1150),target:staffTargetDefault})}return out}
+function parseRace(rows){const arr=[];for(const r of rows){const nums=r.words.filter(w=>w.x>450&&nval(w.t)!=null).map(w=>({x:w.x,v:nval(w.t)}));if(nums.length<2)continue;const name=r.words.filter(w=>w.x<500).map(w=>w.t).join(" ").trim();if(!name||/^\+|^CHUONG|^THUC|^TARGET/i.test(name))continue;const actual=nums.find(x=>x.x>=480&&x.x<760)?.v??null,target=nums.find(x=>x.x>=760&&x.x<1000)?.v??null;if(actual!=null&&target!=null)arr.push([name,actual,target])}return arr}
+async function runOCR(){const fs=[...reportInput.files];if(fs.length!==5){alert("Cần chọn đúng 5 ảnh nguồn: tổng siêu thị, nhân viên, CE, DV, ICT.");return}const st=document.getElementById("ocrStatus"),btn=document.querySelector('button[onclick="runOCR()"]');if(btn){btn.disabled=true;btn.textContent="Đang phân tích…"}let worker=null,results=[];try{st.textContent="Đang tải OCR…";if(!window.Tesseract)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";sc.onload=ok;sc.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(sc)});worker=await Tesseract.createWorker("vie+eng",1,{logger:m=>st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"});for(let i=0;i<fs.length;i++){st.textContent=`OCR ảnh ${i+1}/5: ${fs[i].name}`;const c=await preprocessImage(fs[i]);const r=await worker.recognize(c);results.push({file:fs[i],text:r.data.text||"",words:r.data.words||[],confidence:r.data.confidence||0})}
+// Identify each image from textual headers, not selection order.
+const store=results.find(x=>/DT quy đổi|DT quy doi/i.test(x.text)&&/DT dự kiến|target ngày/i.test(x.text));const employee=results.find(x=>/NHÂN VIÊN|NHAN VIEN/i.test(x.text)&&/SỐ LƯỢNG|DOANH THU QĐ/i.test(x.text));const raceFiles=results.filter(x=>/CHƯƠNG TRÌNH|CHUONG TRINH/i.test(x.text));if(!store||!employee||raceFiles.length!==3)throw Error("Không phân loại đủ 1 ảnh tổng + 1 ảnh nhân viên + 3 ảnh thi đua. Dashboard giữ nguyên dữ liệu cũ.");
+const sp=parseStore(store.text);const sr=parseStaff(groupWords(employee.words));const rr=raceFiles.map(x=>parseRace(groupWords(x.words))).flat();if(sp.sales==null||sp.target==null||sr.length<8||rr.length<20)throw Error(`Kiểm tra không đạt: tổng=${sp.sales}, target=${sp.target}, nhân viên=${sr.length}, chương trình=${rr.length}. Không cập nhật dashboard để tránh sai.`);
+// only commit when validations pass; totals must reconcile
+const sum=sr.reduce((a,x)=>a+(x.sales||0),0);if(Math.abs(sum-sp.sales)>0.05)throw Error(`Đối chiếu thất bại: nhân viên ${sum} ≠ tổng siêu thị ${sp.sales}. Không cập nhật.`);
+staff=sr;races=rr;storeSalesQd=sp.sales;storeTarget=sp.target;storeInstallmentQd=sp.gift;persistDashboard();render();document.getElementById("targetInput").value=storeTarget;document.getElementById("ocrText").textContent=results.map(x=>"=== "+x.file.name+" ===\n"+x.text).join("\n\n");document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ CẬP NHẬT: ${staff.length} nhân viên • ${races.length} chương trình</b><p>DT tổng ${fmt(storeSalesQd)} • Tổng NV ${fmt(sum)} • Target ${fmt(storeTarget)}. Đã qua đối chiếu.</p></div>`;st.textContent="OCR và kiểm tra chéo hoàn tất.";setMappingStatus("Đã cập nhật dữ liệu OCR và qua kiểm tra tổng doanh thu.",true)
+}catch(e){st.textContent="CHƯA CẬP NHẬT: "+(e.message||e);document.getElementById("ocrResult").innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Không cập nhật dữ liệu.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus("Không cập nhật: dữ liệu chưa qua kiểm tra.",false)}finally{if(worker)try{await worker.terminate()}catch(_){}if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}}
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").textContent="";document.getElementById("ocrResult").innerHTML="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh";setMappingStatus("DATA OCR: Chưa chạy.",false)}
 </script>
 </body></html>
