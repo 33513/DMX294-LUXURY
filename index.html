@@ -122,53 +122,100 @@ function render(){
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
-  let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
+  let target=x.target??(x.sales>0?staffTargetDefault:0), done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
 }
-function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
-function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
-function resetTargets(){if(!confirm("Khôi phục dữ liệu mẫu?"))return;location.reload()}
-render();
+function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;persistDashboard();render()}
+function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
+function resetTargets(){if(!confirm("Xóa data đã nhập và khôi phục dữ liệu mẫu?"))return;localStorage.removeItem("DMX294_DATA_V3");location.reload()}
+restoreDashboard();document.getElementById("targetInput").value=storeTarget;render();
 const reportInput=document.getElementById("reportImage");
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
 
-// IMPORT CSV: cập nhật data theo cột xác định, không suy đoán từ OCR text
-function csvSplit(line){return line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(v=>v.trim().replace(/^"|"$/g,"").replace(/""/g,'"'))}
-function csvNum(v){if(v==null||String(v).trim()==="")return null;let s=String(v).trim().replace(/\s/g,"");if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else s=s.replace(",",".");let n=Number(s);return Number.isFinite(n)?n:null}
+// IMPORT CSV V3 — strict parsing, complete replacement + persistent source
+function csvSplit(line,delimiter){
+ const out=[];let cur="",q=false;
+ for(let i=0;i<line.length;i++){const ch=line[i];
+  if(ch==='"'){if(q&&line[i+1]==='"'){cur+='"';i++}else q=!q}
+  else if(ch===delimiter&&!q){out.push(cur.trim());cur=""}
+  else cur+=ch;
+ }
+ out.push(cur.trim());return out;
+}
+function detectDelimiter(line){return (line.split(";").length>line.split(",").length)?";":","}
+function csvNum(v){
+ if(v==null||String(v).trim()==="")return null;
+ let s=String(v).trim().replace(/\s/g,"");
+ // CSV chuẩn: dấu chấm thập phân. Hỗ trợ định dạng VN 1.234,56
+ if(s.includes(",")&&s.includes(".")){s=s.replace(/\./g,"").replace(",",".")}
+ else if(s.includes(",")){s=s.replace(",",".")}
+ const n=Number(s);return Number.isFinite(n)?n:null
+}
+function persistDashboard(){
+ try{localStorage.setItem("DMX294_DATA_V3",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,raceGroups,updated:new Date().toISOString()}));}
+ catch(e){console.warn("Không lưu localStorage",e)}
+}
+function restoreDashboard(){
+ try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V3")||"null");if(!d)return;
+  if(Array.isArray(d.staff))staff=d.staff;if(Array.isArray(d.races))races=d.races;
+  if(d.storeSalesQd!==undefined)storeSalesQd=d.storeSalesQd;
+  if(d.storeInstallmentQd!==undefined)storeInstallmentQd=d.storeInstallmentQd;
+  if(Number.isFinite(d.storeTarget))storeTarget=d.storeTarget;
+  if(Number.isFinite(d.staffTargetDefault))staffTargetDefault=d.staffTargetDefault;
+  if(d.raceGroups)Object.assign(raceGroups,d.raceGroups);
+ }catch(e){console.warn("Dữ liệu lưu không đọc được",e)}
+}
 function importCSVData(){
- const raw=document.getElementById("csvData").value.trim(), status=document.getElementById("csvStatus");
+ const raw=document.getElementById("csvData").value.trim(),status=document.getElementById("csvStatus");
  if(!raw){status.textContent="Chưa có CSV.";return}
- const lines=raw.split(/\r?\n/).filter(x=>x.trim());
- const header=csvSplit(lines.shift()).map(x=>x.toLowerCase());
+ const lines=raw.split(/\r?\n/).filter(x=>x.trim()),del=detectDelimiter(lines[0]);
+ const header=csvSplit(lines.shift(),del).map(x=>x.toLowerCase().replace(/^\ufeff/,""));
  const ix=Object.fromEntries(header.map((h,i)=>[h,i]));
- for(const k of ["type","actual"])if(ix[k]===undefined){status.textContent="CSV thiếu cột bắt buộc "+k;return}
- const newStaff=[],newRace=[];let total=null,giftTotal=null,target=null,errors=[];
+ for(const k of ["type","actual"])if(ix[k]===undefined){status.textContent="CSV thiếu cột "+k+"; hiện có: "+header.join(", ");return}
+ const get=(c,k)=>c[ix[k]]??"";
+ let nextStaff=null,nextRace=null,total=null,giftTotal=null,target=null,staffTarget=null;
+ const errors=[],staffRows=[],raceRows=[],seenStaff=new Set(),seenRace=new Set();
  for(let li=0;li<lines.length;li++){
-  const c=csvSplit(lines[li]),get=k=>c[ix[k]]??"",type=get("type").toLowerCase();
-  const actual=csvNum(get("actual")),gift=csvNum(get("gift")),t=csvNum(get("target"));
+  const c=csvSplit(lines[li],del),type=get(c,"type").toLowerCase();
+  const actual=csvNum(get(c,"actual")),gift=csvNum(get(c,"gift")),t=csvNum(get(c,"target"));
   if(type==="total"){
    if(actual===null){errors.push("Dòng "+(li+2)+": total thiếu actual");continue}
    total=actual;if(gift!==null)giftTotal=gift;if(t!==null)target=t;
   }else if(type==="staff"){
-   const user=get("user"),name=get("name");
+   const user=get(c,"user").trim(),name=get(c,"name").trim();
    if(!user||!name||actual===null){errors.push("Dòng "+(li+2)+": staff cần user/name/actual");continue}
-   newStaff.push({user,name,sales:actual,gift:gift??0,target:t??staffTargetDefault});
+   if(seenStaff.has(user)){errors.push("USER trùng "+user);continue}seenStaff.add(user);
+   staffRows.push({user,name,sales:actual,gift:gift??0,target:t??staffTargetDefault});
   }else if(type==="race"){
-   const program=get("program");
+   const program=get(c,"program").trim(),group=(get(c,"group")||get(c,"category")||"").trim().toUpperCase();
    if(!program||actual===null||t===null){errors.push("Dòng "+(li+2)+": race cần program/actual/target");continue}
-   newRace.push([program,actual,t]);
-  }else errors.push("Dòng "+(li+2)+": type phải là total/staff/race");
+   if(seenRace.has(program)){errors.push("Chương trình trùng: "+program);continue}seenRace.add(program);
+   raceRows.push({program,actual,target:t,group});
+  }else if(type===""){
+   errors.push("Dòng "+(li+2)+": thiếu type");
+  }else errors.push("Dòng "+(li+2)+": type không hợp lệ ("+type+")");
  }
- if(errors.length){status.innerHTML="<b>Chưa cập nhật.</b><br>"+errors.join("<br>");return}
- if(!newStaff.length&&!newRace.length&&total===null){status.textContent="CSV không có dòng data hợp lệ.";return}
- // Validate duplicate staff and program names
- if(new Set(newStaff.map(x=>x.user)).size!==newStaff.length){status.textContent="Có USER bị trùng. Không cập nhật.";return}
- if(newStaff.length)staff=newStaff;
- if(newRace.length){races=newRace;raceGroups.CE=newRace.map(x=>x[0]);raceGroups.DV=[];raceGroups.ICT=[]}
+ if(errors.length){status.innerHTML="<b>KHÔNG cập nhật vì CSV có lỗi:</b><br>"+errors.join("<br>");return}
+ if(!staffRows.length&&!raceRows.length&&total===null){status.textContent="CSV không có dòng dữ liệu hợp lệ.";return}
+ // Chỉ thay đúng nhóm có trong file; không trộn data cũ với data mới
+ if(staffRows.length)nextStaff=staffRows;
+ if(raceRows.length){
+  nextRace=raceRows.map(x=>[x.program,x.actual,x.target]);
+  const groups={CE:[],DV:[],ICT:[]};
+  raceRows.forEach(x=>{
+   let g=x.group;
+   if(!g){for(const k of ["CE","DV","ICT"])if((raceGroups[k]||[]).includes(x.program)){g=k;break}}
+   if(!["CE","DV","ICT"].includes(g))g="CE";
+   groups[g].push(x.program);
+  });
+  raceGroups.CE=groups.CE;raceGroups.DV=groups.DV;raceGroups.ICT=groups.ICT;
+ }
+ if(nextStaff)staff=nextStaff;if(nextRace)races=nextRace;
  if(total!==null)storeSalesQd=total;if(giftTotal!==null)storeInstallmentQd=giftTotal;if(target!==null)storeTarget=target;
- document.getElementById("targetInput").value=storeTarget;render();
- status.innerHTML="<b>Đã cập nhật data từ CSV.</b> Nhân viên: "+newStaff.length+"; thi đua: "+newRace.length+"; tổng: "+(total===null?"không đổi":fmt(total))+".<br>Hãy đối chiếu lại với báo cáo gốc trước khi dùng.";
+ document.getElementById("targetInput").value=storeTarget;
+ persistDashboard();render();
+ status.innerHTML="<b>ĐÃ CẬP NHẬT VÀ LƯU DATA.</b><br>Nhân viên: "+(nextStaff?staff.length:"giữ nguyên")+"; thi đua: "+(nextRace?races.length:"giữ nguyên")+"; tổng QĐ: "+(total===null?"giữ nguyên":fmt(total))+".<br>Đã lưu trên trình duyệt này. Đối chiếu tổng báo cáo trước khi sử dụng.";
 }
 function downloadCSVTemplate(){
  const content="type,user,name,actual,gift,target,program\\r\\ntotal,,,0,0,190,\\r\\nstaff,171730,Nguyen Minh Mai Tram,0,0,25,\\r\\nrace,,,0,,0,Tivi TCL\\r\\n";
