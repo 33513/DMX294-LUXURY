@@ -151,13 +151,14 @@ async function runOCR(){
    langPath:"https://tessdata.projectnaptha.com/4.0.0",
    gzip:true
   });
-  let all=[];
+  let all=[], allWords=[];
   for(let i=0;i<fs.length;i++){
    st.textContent=`Bước 3/3: đọc ảnh ${i+1}/${fs.length} (${fs[i].name})…`;
    const result=await worker.recognize(fs[i]);
    all.push(`===== ${fs[i].name} =====\n${result.data.text||"(Không nhận dạng được chữ)"}`);
+   (result.data.words||[]).forEach(w=>{if(w.text&&w.bbox)allWords.push({file:fs[i].name,text:w.text,x0:w.bbox.x0,y0:w.bbox.y0,x1:w.bbox.x1,y1:w.bbox.y1,conf:w.confidence||0})});
   }
-  out.value=all.join("\n\n");
+  out.value=all.join("\n\n"); window.ocrWordData=allWords;
   st.textContent="Đã OCR xong "+fs.length+" ảnh. Kết quả ở ô bên dưới.";
   if(!out.value.trim())st.textContent="OCR chạy xong nhưng không đọc được chữ. Hãy dùng ảnh rõ, thẳng và đủ sáng.";
  }catch(e){
@@ -189,10 +190,19 @@ function setMappingStatus(msg,ok=false){
 }
 
 let pendingMapping=null;
+// Tọa độ OCR: gom từ thành hàng theo tâm Y, giữ vị trí X để không trộn cột.
+function getOCRRows(){
+ const ws=window.ocrWordData||[]; if(!ws.length)return [];
+ const sorted=[...ws].sort((a,b)=>((a.y0+a.y1)/2)-((b.y0+b.y1)/2)); const rows=[];
+ for(const w of sorted){const cy=(w.y0+w.y1)/2;let r=rows.find(q=>Math.abs(q.cy-cy)<=Math.max(9,(w.y1-w.y0)*.55));
+  if(!r){r={cy,words:[]};rows.push(r)} r.words.push(w);r.cy=r.words.reduce((s,a)=>s+(a.y0+a.y1)/2,0)/r.words.length;
+ }
+ return rows.map(r=>{r.words.sort((a,b)=>a.x0-b.x0);return {y:r.cy,words:r.words,text:r.words.map(w=>w.text).join(" "),cells:r.words.map(w=>({text:w.text,x:(w.x0+w.x1)/2}))}});
+}
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value;
  if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
- const lines=raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+ const coordRows=getOCRRows(); const lines=coordRows.length?coordRows.map(r=>r.text):raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  const norm=normalizeText;
  const nums=line=>(line.match(/-?\d+(?:[.,]\d+)?/g)||[]).map(parseVNNumber).filter(v=>v!==null);
  const preview={store:null,staff:[],races:[],warnings:[]};
@@ -234,6 +244,8 @@ function mapOCRToDashboard(){
    }else preview.warnings.push("Chương trình "+hit[1][0]+": không đủ số trên cùng dòng.");
  }
 
+ if(!coordRows.length)preview.warnings.unshift("Không có dữ liệu tọa độ OCR. Hãy bấm Phân tích OCR ảnh để tạo lại word-bbox.");
+ else preview.warnings.unshift("Đã giữ tọa độ OCR ("+(window.ocrWordData||[]).length+" từ). Bộ ghép cột đang kiểm tra theo hàng; dòng không đủ điều kiện không tự ghi.");
  pendingMapping=preview;
  const box=document.getElementById("mappingStatus");
  const staffHtml=preview.staff.length?preview.staff.map(x=>`${x.user} • ${x.name}: QĐ ${fmt(x.sales)} / góp ${fmt(x.gift)}`).join("<br>"):"Chưa có dòng nhân viên đủ điều kiện.";
