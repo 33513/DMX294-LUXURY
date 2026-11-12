@@ -33,11 +33,11 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <section id="overview">
  <div class="section-head"><div><div class="eyebrow">Executive overview</div><h2>01. Tổng quan doanh thu realtime</h2></div><p>Đơn vị: triệu đồng</p></div>
  <div class="kpis">
-  <div class="kpi"><div class="k-label"><span class="ico">₫</span> DThu QĐ tổng</div><div class="k-value" id="total">124</div><div class="k-foot">Doanh thu quy đổi</div></div>
+  <div class="kpi"><div class="k-label"><span class="ico">₫</span> DThu QĐ tổng</div><div class="k-value" id="total">—</div><div class="k-foot">Doanh thu quy đổi</div></div>
   <div class="kpi gold"><div class="k-label"><span class="ico">◎</span> Target ngày</div><div class="k-value" id="target">190</div><div class="k-foot">Mục tiêu doanh thu QĐ</div></div>
-  <div class="kpi green"><div class="k-label"><span class="ico">↗</span> % HT Target</div><div class="k-value" id="completion">65.3%</div><div class="k-foot">Tổng thực hiện / Target</div></div>
-  <div class="kpi"><div class="k-label"><span class="ico">▤</span> DThu trả góp</div><div class="k-value" id="installment">82</div><div class="k-foot">Doanh thu góp quy đổi</div></div>
-  <div class="kpi red"><div class="k-label"><span class="ico">％</span> % trả góp</div><div class="k-value" id="share">66.1%</div><div class="k-foot">Trả góp / DThu QĐ tổng</div></div>
+  <div class="kpi green"><div class="k-label"><span class="ico">↗</span> % HT Target</div><div class="k-value" id="completion">—</div><div class="k-foot">Tổng thực hiện / Target</div></div>
+  <div class="kpi"><div class="k-label"><span class="ico">▤</span> DThu trả góp</div><div class="k-value" id="installment">—</div><div class="k-foot">Doanh thu góp quy đổi</div></div>
+  <div class="kpi red"><div class="k-label"><span class="ico">％</span> % trả góp</div><div class="k-value" id="share">—</div><div class="k-foot">Trả góp / DThu QĐ tổng</div></div>
  </div>
 </section>
 <section id="staff">
@@ -73,50 +73,50 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 </div>
 <script>
 let staff=[
- {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:84,gift:82,target:100},
- {user:"258196",name:"Lê Xuân Hải",sales:15,gift:0,target:35},
- {user:"179512",name:"Phạm Văn Thuận",sales:13,gift:0,target:30},
- {user:"56283",name:"Trần Vũ Linh",sales:11,gift:0,target:25},
- {user:"281312",name:"Nguyễn Công Toàn",sales:0,gift:0,target:25},
- {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25}
+ {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:null,gift:null,target:100},
+ {user:"258196",name:"Lê Xuân Hải",sales:null,gift:null,target:35},
+ {user:"179512",name:"Phạm Văn Thuận",sales:null,gift:null,target:30},
+ {user:"56283",name:"Trần Vũ Linh",sales:null,gift:null,target:25},
+ {user:"281312",name:"Nguyễn Công Toàn",sales:null,gift:null,target:25},
+ {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:null,gift:null,target:25}
 ];
 let races=[
- ["Điện tử Samsung",0,3.47],["CE LG",14.90,9.73],["Tivi TCL",7.82,1.61],
- ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
- ["Camera",0,1.00],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
- ["Điện thoại Vivo",0,1.67],["Đồng hồ & Smartwatch",0,1.87],["Laptop",0,2.79],
- ["Loa Phụ Kiện",0,0.93],["Máy Lạnh",0,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",0,3.61],
- ["Máy nước nóng",0,1.00],["Máy sấy / Máy rửa chén",0,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",0,0],
- ["Phụ kiện công nghệ",0,0.11],["Quạt gió",0,0.83],["Sim",0,2.00],["Sim ĐMX",0,1.00],
- ["Vay tiền mặt",0,8.95],["Ví trả sau",0,6.57],["Phụ kiện khác IT & Nhóm khác",0.30,5.60],
- ["ĐIỆN THOẠI & TABLET ANDROID",3.32,42.73],["Trả chậm Homecredit",13.98,69.23],
- ["Cáp sạc",0.15,0.72],["VAS",2,9],["Tai nghe",0.20,0.86],["Sạc dự phòng",0.23,0.82],
- ["Nạp rút",3,8],["Nồi cơm & Nồi chiên",1.54,3.90],["Điện tử",7.82,17.63],
- ["Trả Chậm Điện máy & Gia dụng",47.70,52.38],
- ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
- ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
+ ["Điện tử Samsung",null,3.47],["CE LG",null,9.73],["Tivi TCL",null,1.61],
+ ["Bảo hiểm Thọ ĐMX",null,25.90],["Bảo hiểm Thọ ICT",null,8.37],["Bảo hiểm Tổng",null,2.37],
+ ["Camera",null,1.00],["Đèn năng lượng mặt trời",null,0],["Điện thoại Realme",null,2.14],
+ ["Điện thoại Vivo",null,1.67],["Đồng hồ & Smartwatch",null,1.87],["Laptop",null,2.79],
+ ["Loa Phụ Kiện",null,0.93],["Máy Lạnh",null,2.00],["Máy lọc KK - Hút bụi - Hút ẩm",null,3.61],
+ ["Máy nước nóng",null,1.00],["Máy sấy / Máy rửa chén",null,1.13],["Mở thẻ tín dụng VBANK MWG và TPBANK EVO",null,0],
+ ["Phụ kiện công nghệ",null,0.11],["Quạt gió",null,0.83],["Sim",null,2.00],["Sim ĐMX",null,1.00],
+ ["Vay tiền mặt",null,8.95],["Ví trả sau",null,6.57],["Phụ kiện khác IT & Nhóm khác",null,5.60],
+ ["ĐIỆN THOẠI & TABLET ANDROID",null,42.73],["Trả chậm Homecredit",null,69.23],
+ ["Cáp sạc",null,0.72],["VAS",null,9],["Tai nghe",null,0.86],["Sạc dự phòng",null,0.82],
+ ["Nạp rút",null,8],["Nồi cơm & Nồi chiên",null,3.90],["Điện tử",null,17.63],
+ ["Trả Chậm Điện máy & Gia dụng",null,52.38],
+ ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",null,23.10],
+ ["Máy giặt",null,13.22],["Tủ lạnh / Đông / Mát",null,11.75],["Máy lọc nước",null,7.27]
 ];
 let storeSalesQd=null, storeInstallmentQd=null, storeTarget=190, staffTargetDefault=25;
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
- document.getElementById(id).innerHTML=rows.map(x=>{let p=pct(x[1],x[2]),c=p>=100?"positive":"negative";return `<tr><td class="name">${x[0]}</td><td class="num">${fmt(x[1])}</td><td class="num">${fmt(x[2])}</td><td class="num percent ${c}">${p.toFixed(1)}%</td></tr>`}).join("");
+ document.getElementById(id).innerHTML=rows.map(x=>{let p=(x[1]==null||x[2]==null)?null:pct(x[1],x[2]),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x[0])}</td><td class="num">${x[1]==null?"—":fmt(x[1])}</td><td class="num">${x[2]==null?"—":fmt(x[2])}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
 }
 
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
 function render(){
- const total=storeSalesQd??staff.reduce((s,x)=>s+x.sales,0), gift=storeInstallmentQd??staff.reduce((s,x)=>s+x.gift,0), base=pct(total,storeTarget);
- document.getElementById("total").textContent=fmt(total);
+ const total=storeSalesQd, gift=storeInstallmentQd, base=total==null?null:pct(total,storeTarget);
+ document.getElementById("total").textContent=total==null?"—":fmt(total);
  document.getElementById("target").textContent=fmt(storeTarget);
- document.getElementById("completion").textContent=base.toFixed(1)+"%";
- document.getElementById("installment").textContent=fmt(gift);
- document.getElementById("share").textContent=pct(gift,total).toFixed(1)+"%";
+ document.getElementById("completion").textContent=base==null?"—":base.toFixed(1)+"%";
+ document.getElementById("installment").textContent=gift==null?"—":fmt(gift);
+ document.getElementById("share").textContent=(gift==null||total==null||total===0)?"—":pct(gift,total).toFixed(1)+"%";
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
-  let target=x.target??(x.sales>0?staffTargetDefault:0), done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
-  return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
+  let target=x.target??(x.sales>0?staffTargetDefault:0), done=(x.sales==null||target<=0||base==null)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
+  return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;persistDashboard();render()}
@@ -149,25 +149,16 @@ async function runOCR(){
   for(let i=0;i<fs.length;i++){st.textContent=`Đọc ảnh ${i+1}/${fs.length}: ${fs[i].name}`;const c=await preprocessImage(fs[i]);const r=await worker.recognize(c);all.push({name:fs[i].name,text:r.data.text||"",confidence:r.data.confidence||0})}
   document.getElementById("ocrText").textContent=all.map(x=>x.text).join("\n");const res=applyOCRAutomatically(all);
   st.textContent=`OCR hoàn tất ${fs.length} ảnh • confidence trung bình ${res.confidence.toFixed(0)}%`;
-  document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ NHẬN DIỆN: ${res.staff} nhân viên • ${res.race} chương trình</b><p style="font-size:12px;color:#64748b">${esc(res.note)}</p><details><summary>Xem nội dung OCR gốc</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px">${esc(all.map(x=>"=== "+x.name+" ===\n"+x.text).join("\n\n"))}</pre></details></div>`;setMappingStatus(res.note,true)
+  document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ NHẬN DIỆN: ${res.staff} nhân viên • ${res.race} chương trình</b><p style="font-size:12px;color:#64748b">${esc(res.note)}</p><details><summary>Xem nội dung OCR gốc</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px">${esc(all.map(x=>"=== "+x.name+" ===\n"+x.text).join("\n\n"))}</pre></details></div>`;setMappingStatus(res.note,false)
  }catch(e){st.textContent="OCR KHÔNG CHẠY: "+(e.message||e);
   document.getElementById("ocrResult").innerHTML='<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>OCR thất bại.</b><br>'+esc(e.message||String(e))+'<br>Kiểm tra kết nối mạng/CDN hoặc tải lại trang. Dashboard chưa cập nhật.</div>';
   setMappingStatus("OCR chưa hoàn tất. Dashboard không được cập nhật.",false)}
  finally{if(worker)try{await worker.terminate()}catch(_){}if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}
 }
 function applyOCRAutomatically(files){
- const lines=files.map(f=>f.text).join("\n").split(/\r?\n/).map(x=>x.trim()).filter(Boolean),norm=normalizeText,rx=/(?<![A-Za-z])\d{1,4}(?:[.,]\d{1,3})?/g,nums=s=>(s.match(rx)||[]).map(parseVNNumber).filter(Number.isFinite);
- let ns=0,nr=0,conf=files.reduce((a,b)=>a+b.confidence,0)/Math.max(files.length,1);
- for(const line of lines){const n=norm(line),v=nums(line);if(!v.length)continue;
-  const person=staff.find(x=>line.includes(x.user)||n.includes(norm(x.name)));
-  if(person){const z=v.filter(q=>String(Math.trunc(q))!==person.user);if(z.length){person.sales=z[0];if(z.length>1)person.gift=z[1];ns++}continue}
-  const item=races.find(x=>norm(x[0]).length>3&&n.includes(norm(x[0])));
-  if(item){item[1]=v[0];if(v.length>1)item[2]=v[1];nr++}
-  if(/doanh thu quy doi tong|dt quy doi tong|tong doanh thu quy doi/.test(n))storeSalesQd=v[v.length-1];
-  if(/doanh thu tra gop|dt tra gop quy doi/.test(n))storeInstallmentQd=v[v.length-1];
- }
- if(ns||nr||storeSalesQd!==null||storeInstallmentQd!==null){persistDashboard();render()}
- return {staff:ns,race:nr,confidence:conf,note:`Đã cập nhật ${ns} nhân viên và ${nr} chương trình từ dòng OCR có nhãn khớp. Số không nhận diện được giữ nguyên (không tự gán 0). OCR bảng ảnh vẫn có thể mất cột; kiểm tra Dashboard với ảnh nguồn.`}
+ const conf=files.reduce((a,b)=>a+b.confidence,0)/Math.max(files.length,1);
+ // OCR plain text has no dependable column geometry. Do not mutate dashboard values from guessed number order.
+ return {staff:0,race:0,confidence:conf,note:"OCR đã đọc văn bản. Chưa cập nhật số liệu dashboard vì OCR dạng text không giữ tọa độ cột; tự gán số theo thứ tự có thể làm sai doanh thu/target. Dashboard chỉ hiển thị số đã xác nhận từ nguồn dữ liệu."};
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").textContent="";document.getElementById("ocrResult").innerHTML="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh";setMappingStatus("DATA OCR: Chưa chạy.",false)}
 </script>
