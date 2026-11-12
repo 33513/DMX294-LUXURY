@@ -64,20 +64,16 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
-<div class="panel" style="margin:12px 0;padding:14px;border:1px solid #dbe3ef;border-radius:12px">
-<strong>Nhập KPI cửa hàng đã đối chiếu (triệu đồng)</strong>
-<div class="actions" style="margin-top:8px"><input id="verifiedStoreSales" type="number" min="0" placeholder="DT QĐ cửa hàng" style="max-width:180px"><input id="verifiedStoreGift" type="number" min="0" placeholder="DT trả góp QĐ" style="max-width:180px"><button class="btn" onclick="applyVerifiedStore()">Cập nhật KPI đã xác minh</button></div>
-<small>Chỉ nhập số lấy từ dòng tổng báo cáo cửa hàng; không lấy tổng cộng nhân viên.</small></div>
 <div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Map DThu QĐ tổng</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
 <div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
-<textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
+<div id="mappingStatus" style="padding:10px;border:1px solid #dbe3ef;border-radius:10px;margin-top:10px;font-size:12px">DATA MAPPING: Chưa chạy.</div><textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
 <small>OCR đọc chữ. Nút Map chỉ nhận DThu QĐ tổng có nhãn rõ; dữ liệu nhân viên/thi đua cần bảng đối chiếu xác nhận, không tự đoán.</small></div></div>
  </div>
 </section>
 <div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
 </div>
 <script>
-const staff=[
+let staff=[
  {user:"171730",name:"Nguyễn Minh Mai Trâm",sales:84,gift:82,target:100},
  {user:"258196",name:"Lê Xuân Hải",sales:15,gift:0,target:35},
  {user:"179512",name:"Phạm Văn Thuận",sales:13,gift:0,target:30},
@@ -85,7 +81,7 @@ const staff=[
  {user:"281312",name:"Nguyễn Công Toàn",sales:0,gift:0,target:25},
  {user:"33513",name:"Đặng Nguyễn Vũ Vi",sales:0,gift:0,target:25}
 ];
-const races=[
+let races=[
  ["Điện tử Samsung",0,3.47],["CE LG",14.90,9.73],["Tivi TCL",7.82,1.61],
  ["Bảo hiểm Thọ ĐMX",0,25.90],["Bảo hiểm Thọ ICT",0,8.37],["Bảo hiểm Tổng",0,2.37],
  ["Camera",0,1.00],["Đèn năng lượng mặt trời",0,0],["Điện thoại Realme",0,2.14],
@@ -101,8 +97,7 @@ const races=[
  ["Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT",33.72,23.10],
  ["Máy giặt",20.21,13.22],["Tủ lạnh / Đông / Mát",22.49,11.75],["Máy lọc nước",17.54,7.27]
 ];
-// STORE KPI phải độc lập với tổng nhân viên; chỉ cập nhật khi nhập/đối chiếu báo cáo cửa hàng.
-let storeSales=0, storeGift=0, storeTarget=190, staffTargetDefault=25;
+let storeSalesQd=null, storeInstallmentQd=null, storeTarget=190, staffTargetDefault=25;
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
@@ -112,7 +107,7 @@ function renderRaceGroup(group,id){
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
 function render(){
- const total=storeSales, gift=storeGift, base=pct(total,storeTarget);
+ const total=storeSalesQd??staff.reduce((s,x)=>s+x.sales,0), gift=storeInstallmentQd??staff.reduce((s,x)=>s+x.gift,0), base=pct(total,storeTarget);
  document.getElementById("total").textContent=fmt(total);
  document.getElementById("target").textContent=fmt(storeTarget);
  document.getElementById("completion").textContent=base.toFixed(1)+"%";
@@ -124,14 +119,6 @@ function render(){
   let target=x.sales>0?staffTargetDefault:0, done=pct(x.sales,target), share=pct(x.gift,x.sales), cls=done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${fmt(x.sales)}</td><td class="num">${fmt(x.gift)}</td><td class="num">${x.sales?share.toFixed(1)+"%":"—"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${target>0?done.toFixed(1)+"%":"—"}</span><div class="bar"><span style="width:${Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
-}
-function applyVerifiedStore(){
- const a=document.getElementById("verifiedStoreSales").value;
- const b=document.getElementById("verifiedStoreGift").value;
- if(a===""||b===""){alert("Nhập đủ DT QĐ cửa hàng và DT trả góp QĐ.");return}
- storeSales=Number(a);storeGift=Number(b);
- render();
- alert("Đã cập nhật KPI cửa hàng độc lập. Hãy kiểm tra lại với báo cáo nguồn.");
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;render()}
@@ -183,11 +170,14 @@ async function runOCR(){
 }
 
 function mapOCRToDashboard(){
- const raw=document.getElementById("ocrText").value.trim();
- if(!raw){alert("Chưa có kết quả OCR.");return}
- // OCR text-only không đủ cấu trúc để xác định đúng hàng/cột.
- // Không đẩy dữ liệu chưa kiểm chứng vào dashboard.
- alert("OCR đã đọc văn bản, nhưng chưa map tự động. Cần đối chiếu đúng bảng/hàng/cột trước khi cập nhật dashboard. Dữ liệu hiện tại được giữ nguyên để tránh sai.");
+ const raw=document.getElementById("ocrText").value;
+ if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
+ // Detect a clearly labeled total only; never infer staff or competition values from unlabelled numbers.
+ const norm=raw.replace(/,/g,".").replace(/\s+/g," ");
+ const findLabel=(patterns)=>{for(const re of patterns){const m=norm.match(re);if(m){let n=Number(m[1].replace(/\./g,""));if(Number.isFinite(n))return n}}return null};
+ const total=findLabel([/(?:DThu|DT|Doanh thu)\s*(?:QĐ|quy đổi)?\s*(?:tổng|toàn cửa hàng)?\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i,/(?:Tổng\s*DThu\s*QĐ)\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i]);
+ if(total!==null){storeSalesQd=total;render();alert("Đã map DT QĐ tổng = "+fmt(total)+" vào DATA STORE và render Dashboard.");}
+ else alert("OCR chưa tìm thấy dòng có nhãn DThu QĐ tổng rõ ràng. Không tự map số không có nhãn.");
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
