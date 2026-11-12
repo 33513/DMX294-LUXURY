@@ -107,7 +107,7 @@ function renderRaceGroup(group,id){
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
 function render(){
- const total=storeSalesQd??staff.reduce((s,x)=>s+x.sales,0), gift=storeInstallmentQd??staff.reduce((s,x)=>s+x.gift,0), base=pct(total,storeTarget);
+ const total=storeSalesQd??0, gift=storeInstallmentQd??0, base=pct(total,storeTarget);
  document.getElementById("total").textContent=fmt(total);
  document.getElementById("target").textContent=fmt(storeTarget);
  document.getElementById("completion").textContent=base.toFixed(1)+"%";
@@ -169,38 +169,27 @@ async function runOCR(){
  }
 }
 
+function parseValueNearLabel(norm,label){
+ const at=norm.search(label); if(at<0)return null;
+ const tail=norm.slice(at,at+180);
+ const matches=[...tail.matchAll(/(?:^|\s)(\d{1,4}(?:[.,]\d{1,2})?)(?=\s|$)/g)];
+ for(const m of matches){const value=Number(m[1].replace(",", "."));if(Number.isFinite(value)&&value>=0&&value<=100000)return value;}
+ return null;
+}
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value;
  if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
- // OCR thường tách nhãn và số thành nhiều dòng; chuẩn hóa dấu và khoảng trắng nhưng giữ ngữ cảnh gần nhãn.
- const norm=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-  .replace(/[đĐ]/g,"d").replace(/[,:;]/g," ").replace(/\s+/g," ");
- const numberAfter=(label)=>{
-  const at=norm.search(label); if(at<0)return null;
-  const tail=norm.slice(at,at+140);
-  const nums=[...tail.matchAll(/(?:^|\s)(\d{1,3}(?:[.,]\d{1,2})?)(?=\s|$)/g)]
-   .map(m=>({v:m[1],i:m.index})).filter(x=>x.i>=0);
-  if(!nums.length)return null;
-  // Skip numeric fragments that are part of the label/parenthetical; take nearest plausible value after label.
-  const candidate=nums[0];
-  const value=Number(candidate.v.replace(",","."));
-  return Number.isFinite(value)?value:null;
- };
- const labels=[
-  /dt\s+quy\s+doi\s+tong/i,
-  /doanh\s+thu\s+quy\s+doi\s+tong/i,
-  /dt\s+quy\s+doi/i
- ];
- let total=null;
- for(const label of labels){total=numberAfter(label);if(total!==null)break}
- if(total!==null){
-  storeSalesQd=total;render();
-  document.getElementById("ocrStatus").textContent="Đã nhận diện nhãn DT quy đổi: "+fmt(total)+" (hãy đối chiếu ảnh gốc trước khi dùng).";
-  alert("Đã map DT quy đổi = "+fmt(total)+". Vui lòng kiểm tra lại số trên ảnh gốc.");
- }else{
-  document.getElementById("ocrStatus").textContent="Không map: OCR không đọc được nhãn DT quy đổi đủ rõ. Dữ liệu Dashboard giữ nguyên.";
-  alert("OCR chưa nhận diện được nhãn DT quy đổi rõ ràng. Không thay đổi dữ liệu Dashboard.");
- }
+ const norm=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[đĐ]/g,"d").replace(/[,:;]/g," ").replace(/\s+/g," ").toLowerCase();
+ const totalLabels=[/dt\s+quy\s+doi\s+tong/,/doanh\s+thu\s+quy\s+doi\s+tong/];
+ const installmentLabels=[/dt\s+tra\s+gop\s+quy\s+doi/,/doanh\s+thu\s+tra\s+gop\s+quy\s+doi/,/dt\s+tra\s+gop\s+tong/];
+ let total=null,gift=null;
+ for(const label of totalLabels){total=parseValueNearLabel(norm,label);if(total!==null)break}
+ for(const label of installmentLabels){gift=parseValueNearLabel(norm,label);if(gift!==null)break}
+ if(total===null&&gift===null){document.getElementById("mappingStatus").textContent="DATA MAPPING: Không tìm thấy nhãn KPI rõ. Không cập nhật.";alert("Không tìm thấy nhãn DT QĐ tổng / DT trả góp rõ. Dashboard không thay đổi.");return}
+ if(total!==null)storeSalesQd=total;if(gift!==null)storeInstallmentQd=gift;render();
+ const msg=[];if(total!==null)msg.push("DT QĐ tổng "+fmt(total));if(gift!==null)msg.push("DT trả góp "+fmt(gift));
+ document.getElementById("mappingStatus").textContent="DATA MAPPING: Đã map "+msg.join(" • ")+"; % trả góp tự tính. Nhân viên/thi đua chưa tự map.";
+ alert("Đã map "+msg.join(" • ")+". Vui lòng đối chiếu ảnh gốc.");
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
