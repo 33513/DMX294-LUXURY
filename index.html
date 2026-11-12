@@ -170,25 +170,33 @@ async function runOCR(){
 }
 
 function parseValueNearLabel(norm,label){
- const at=norm.search(label); if(at<0)return null;
- const tail=norm.slice(at,at+180);
- const matches=[...tail.matchAll(/(?:^|\s)(\d{1,4}(?:[.,]\d{1,2})?)(?=\s|$)/g)];
- for(const m of matches){const value=Number(m[1].replace(",", "."));if(Number.isFinite(value)&&value>=0&&value<=100000)return value;}
+ // Strict: only accept a numeric value immediately after the KPI label on the same OCR line.
+ // Never scan arbitrary nearby numbers (37, 113, 19.6%, etc.) as store revenue.
+ const lines=norm.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ for(const line of lines){
+  const at=line.search(label);
+  if(at<0)continue;
+  const tail=line.slice(at+line.match(label)[0].length).trim();
+  const m=tail.match(/^[-:|]?\s*(\d{1,6}(?:[.,]\d{1,2})?)(?=\s|$)/);
+  if(!m)continue;
+  const value=Number(m[1].replace(",","."));
+  if(Number.isFinite(value)&&value>=0&&value<=100000)return value;
+ }
  return null;
 }
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value;
  if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
- const norm=raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[đĐ]/g,"d").replace(/[,:;]/g," ").replace(/\s+/g," ").toLowerCase();
- const totalLabels=[/dt\s+quy\s+doi\s+tong/,/doanh\s+thu\s+quy\s+doi\s+tong/];
- const installmentLabels=[/dt\s+tra\s+gop\s+quy\s+doi/,/doanh\s+thu\s+tra\s+gop\s+quy\s+doi/,/dt\s+tra\s+gop\s+tong/];
+ const norm=raw.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[đĐ]/g,"d").replace(/[,:;]/g," ").replace(/\\s+/g," ").toLowerCase();
+ const totalLabels=[/dt\\s+quy\\s+doi\\s+tong/,/doanh\\s+thu\\s+quy\\s+doi\\s+tong/];
+ const installmentLabels=[/dt\\s+tra\\s+gop\\s+quy\\s+doi/,/doanh\\s+thu\\s+tra\\s+gop\\s+quy\\s+doi/,/dt\\s+tra\\s+gop\\s+tong/];
  let total=null,gift=null;
  for(const label of totalLabels){total=parseValueNearLabel(norm,label);if(total!==null)break}
  for(const label of installmentLabels){gift=parseValueNearLabel(norm,label);if(gift!==null)break}
- if(total===null&&gift===null){document.getElementById("mappingStatus").textContent="DATA MAPPING: Không tìm thấy nhãn KPI rõ. Không cập nhật.";alert("Không tìm thấy nhãn DT QĐ tổng / DT trả góp rõ. Dashboard không thay đổi.");return}
+ if(total===null&&gift===null){document.getElementById("mappingStatus").textContent="DATA MAPPING: Không tìm thấy nhãn KPI rõ. Không cập nhật.";alert("Không tìm thấy số nằm ngay sau nhãn KPI trên cùng dòng OCR. Dashboard không thay đổi để tránh lấy nhầm số.");return}
  if(total!==null)storeSalesQd=total;if(gift!==null)storeInstallmentQd=gift;render();
  const msg=[];if(total!==null)msg.push("DT QĐ tổng "+fmt(total));if(gift!==null)msg.push("DT trả góp "+fmt(gift));
- document.getElementById("mappingStatus").textContent="DATA MAPPING: Đã map "+msg.join(" • ")+"; % trả góp tự tính. Nhân viên/thi đua chưa tự map.";
+ document.getElementById("mappingStatus").textContent="DATA MAPPING: Map theo nhãn + số cùng dòng: "+msg.join(" • ")+"; % trả góp tự tính. Nhân viên/thi đua chưa tự map.";
  alert("Đã map "+msg.join(" • ")+". Vui lòng đối chiếu ảnh gốc.");
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
