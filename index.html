@@ -170,10 +170,17 @@ async function runOCR(){
   // Classification uses distinctive report headers and is independent of upload order.
   // OCR hay bỏ dấu/nhầm ký tự; normalize trước khi nhận dạng header.
   const tx= x=>norm(x.text||"");
-  const store=results.find(x=>/(dt quy doi|dt quy)/.test(tx(x))&&/(dt du kien|target ngay|% ht target ngay)/.test(tx(x)));
-  const employee=results.find(x=>/(nhan vien|ten nv)/.test(tx(x))&&/(so luong|doanh thu qd|dthu qd)/.test(tx(x)));
-  const races=results.filter(x=>/(chuong trinh|thuc hien|target ngay)/.test(tx(x))&&/(% ht ngay|% ht|hang vung)/.test(tx(x)));
-  if(!store||!employee||races.length!==3)throw Error("Không phân loại đủ ảnh tổng + nhân viên + 3 ảnh thi đua. Dashboard giữ nguyên dữ liệu.");
+  // Nhận diện theo dấu hiệu riêng của từng loại báo cáo; không phụ thuộc tên file hay thứ tự tải.
+  const store=results.find(x=>/(dt quy doi|dt du kien ngay|% ht target ngay)/.test(tx(x)) && !/(nhan vien|ten nv|chuong trinh)/.test(tx(x)));
+  const employee=results.find(x=>/(nhan vien|nhan vien \/|ten nv)/.test(tx(x)) && /(doanh thu qd|dt qd|dt tra thang|so luong)/.test(tx(x)));
+  const raceCandidates=results.filter(x=>/(chuong trinh|thuc hien|target ngay)/.test(tx(x))&&/(% ht ngay|% ht|hang vung)/.test(tx(x)));
+  // Fallback for OCR missing header tokens: category-specific item names still identify the race report.
+  const racePool=raceCandidates.length===3?raceCandidates:results.filter(x=>/(ce lg|dien tu samsung|tivi tcl|bao hiem|sim dmx|homecredit|camera|dien thoai realme|laptop)/.test(tx(x)));
+  const races=[...new Set(racePool)];
+  if(!store||!employee||races.length!==3) {
+    const diag=results.map((x,i)=>`Ảnh ${i+1} [${x.file.name}]: ${tx(x).slice(0,180)}`).join('\n');
+    throw Error(`Phân loại ảnh chưa đủ (Tổng:${!!store}, Nhân viên:${!!employee}, Thi đua:${races.length}/3). OCR đầu ảnh: ${diag}`);
+  }
   const sp=parseStore(store.text,store.words,store.width,store.height),sr=parseStaff(groupWords(employee.words),employee.width),rr=races.map(x=>parseRace(groupWords(x.words),x.width));
   if(sp.sales==null||sp.target==null||sr.length<8||rr.some(a=>a.length<8))throw Error(`Dữ liệu chưa đủ tin cậy: tổng=${sp.sales}, target=${sp.target}, NV=${sr.length}, CE/DV/ICT=${rr.map(a=>a.length).join("/")}. Không ghi đè dashboard.`);
   // Preserve source category per report image, not mix all competition rows.
@@ -189,7 +196,7 @@ async function runOCR(){
   document.getElementById("targetInput").value=storeTarget;
   document.getElementById("ocrText").textContent=results.map(x=>"=== "+x.file.name+" ===\\n"+x.text).join("\n\n");
   document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>ĐÃ CẬP NHẬT: ${staff.length} nhân viên • ${races.length} chương trình</b><p>DT tổng ${fmt(storeSalesQd)} • Target ${fmt(storeTarget)}. Đã qua kiểm tra cấu trúc.</p></div>`;
-  st.textContent="OCR hoàn tất.";setMappingStatus("Đã cập nhật dữ liệu sau kiểm tra cấu trúc.",true)
+  st.textContent="OCR hoàn tất.";setMappingStatus(`Đã cập nhật • Tổng: ${store.file.name} • Nhân viên: ${employee.file.name} • Thi đua: ${races.map(x=>x.file.name).join(" / ")}`,true)
  }catch(e){st.textContent="CHƯA CẬP NHẬT: "+(e.message||e);document.getElementById("ocrResult").innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Không cập nhật dữ liệu.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus("Không cập nhật: dữ liệu chưa qua kiểm tra.",false)}
  finally{if(worker)try{await worker.terminate()}catch(_){}if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}
 }
