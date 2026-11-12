@@ -64,10 +64,10 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
-<div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Tạo preview mapping</button><button class="btn" onclick="applyValidatedMapping()">Xác nhận cập nhật</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
+<div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="mapOCRToDashboard()">Tạo preview mapping</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
 <div id="ocrStatus" style="font-size:12px;color:#64748b;margin-top:10px"></div>
 <div id="mappingStatus" style="padding:10px;border:1px solid #dbe3ef;border-radius:10px;margin-top:10px;font-size:12px">DATA MAPPING: Chưa chạy.</div><textarea id="ocrText" rows="6" placeholder="Nội dung OCR hiện tại…" style="width:100%;margin-top:10px;padding:12px;border:1px solid #dce3ee;border-radius:12px;font:12px/1.5 monospace"></textarea>
-<small>Mapping an toàn: tạo Preview trước, chỉ ghi các dòng đủ điều kiện sau khi xác nhận. OCR text không giữ tọa độ cột; dòng mơ hồ sẽ không tự cập nhật.</small></div></div>
+<small>OCR đọc chữ. Nút Map chỉ nhận DThu QĐ tổng có nhãn rõ; dữ liệu nhân viên/thi đua cần bảng đối chiếu xác nhận, không tự đoán.</small></div></div>
  </div>
 </section>
 <div style="text-align:center;color:#a0aabd;font-size:11px;padding:20px 0">DMX LUXURY ANALYTICS • UI PROTOTYPE • LIGHT MODE</div>
@@ -151,14 +151,17 @@ async function runOCR(){
    langPath:"https://tessdata.projectnaptha.com/4.0.0",
    gzip:true
   });
-  let all=[], allWords=[];
+  let all=[], pages=[];
   for(let i=0;i<fs.length;i++){
    st.textContent=`Bước 3/3: đọc ảnh ${i+1}/${fs.length} (${fs[i].name})…`;
    const result=await worker.recognize(fs[i]);
-   all.push(`===== ${fs[i].name} =====\n${result.data.text||"(Không nhận dạng được chữ)"}`);
-   (result.data.words||[]).forEach(w=>{if(w.text&&w.bbox)allWords.push({file:fs[i].name,text:w.text,x0:w.bbox.x0,y0:w.bbox.y0,x1:w.bbox.x1,y1:w.bbox.y1,conf:w.confidence||0})});
+   const d=result.data||{};
+   pages.push({name:fs[i].name,width:d.imageWidth||0,height:d.imageHeight||0,
+     words:(d.words||[]).filter(w=>w.text&&w.bbox).map(w=>({text:w.text.trim(),x0:w.bbox.x0,y0:w.bbox.y0,x1:w.bbox.x1,y1:w.bbox.y1,conf:w.confidence||0}))});
+   all.push(`===== ${fs[i].name} =====\n${d.text||"(Không nhận dạng được chữ)"}`);
   }
-  out.value=all.join("\n\n"); window.ocrWordData=allWords;
+  window.__OCR_PAGES__=pages;
+  out.value=all.join("\n\n");
   st.textContent="Đã OCR xong "+fs.length+" ảnh. Kết quả ở ô bên dưới.";
   if(!out.value.trim())st.textContent="OCR chạy xong nhưng không đọc được chữ. Hãy dùng ảnh rõ, thẳng và đủ sáng.";
  }catch(e){
@@ -170,104 +173,16 @@ async function runOCR(){
  }
 }
 
-// OCR DATA MAPPING ENGINE v2 — chỉ cập nhật dòng có nhận diện đủ chắc chắn
-const normalizeText=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
-function parseVNNumber(v){
- if(v==null)return null;
- let s=String(v).trim().replace(/[^\d,.-]/g,"");
- if(!s)return null;
- // Báo cáo dùng dấu phẩy thập phân; OCR có thể nhận 17,54 hoặc 17.54
- if(s.includes(",")&&s.includes(".")){s=s.replace(/\./g,"").replace(",",".")}
- else if(s.includes(",")){s=s.replace(",",".")}
- const n=Number(s);return Number.isFinite(n)?n:null;
-}
-function extractNumbers(line){
- const matches=(line||"").match(/-?\d+(?:[.,]\d+)?/g)||[];
- return matches.map(parseVNNumber).filter(x=>x!==null);
-}
-function setMappingStatus(msg,ok=false){
- const el=document.getElementById("mappingStatus");el.style.borderColor=ok?"#b7e4ce":"#dbe3ef";el.style.background=ok?"#f0fdf6":"#fff";el.innerHTML=msg;
-}
-
-let pendingMapping=null;
-// Tọa độ OCR: gom từ thành hàng theo tâm Y, giữ vị trí X để không trộn cột.
-function getOCRRows(){
- const ws=window.ocrWordData||[]; if(!ws.length)return [];
- const sorted=[...ws].sort((a,b)=>((a.y0+a.y1)/2)-((b.y0+b.y1)/2)); const rows=[];
- for(const w of sorted){const cy=(w.y0+w.y1)/2;let r=rows.find(q=>Math.abs(q.cy-cy)<=Math.max(9,(w.y1-w.y0)*.55));
-  if(!r){r={cy,words:[]};rows.push(r)} r.words.push(w);r.cy=r.words.reduce((s,a)=>s+(a.y0+a.y1)/2,0)/r.words.length;
- }
- return rows.map(r=>{r.words.sort((a,b)=>a.x0-b.x0);return {y:r.cy,words:r.words,text:r.words.map(w=>w.text).join(" "),cells:r.words.map(w=>({text:w.text,x:(w.x0+w.x1)/2}))}});
-}
 function mapOCRToDashboard(){
  const raw=document.getElementById("ocrText").value;
  if(!raw.trim()){alert("Chưa có kết quả OCR.");return}
- const coordRows=getOCRRows(); const lines=coordRows.length?coordRows.map(r=>r.text):raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
- const norm=normalizeText;
- const nums=line=>(line.match(/-?\d+(?:[.,]\d+)?/g)||[]).map(parseVNNumber).filter(v=>v!==null);
- const preview={store:null,staff:[],races:[],warnings:[]};
-
- // STORE: require an explicit, unambiguous total label. Never take the last number from a vague line.
- const storeCandidates=[];
- for(const line of lines){
-   const n=nums(line), z=norm(line);
-   const hasTotal=/(?:dthu|doanh thu).{0,30}(?:qd|quy doi).{0,25}(?:tong|cua hang|toan hang)|(?:tong|toan hang|cua hang).{0,25}(?:dthu|doanh thu).{0,25}(?:qd|quy doi)/.test(z);
-   if(hasTotal&&n.length)storeCandidates.push({line,value:n[n.length-1]});
- }
- if(storeCandidates.length===1)preview.store=storeCandidates[0];
- else if(storeCandidates.length>1)preview.warnings.push("Có nhiều dòng nghi là tổng cửa hàng; không tự chọn.");
-
- // STAFF: exact USER ID + name context; only parse row if a line has ID and enough numeric cells on same line.
- for(const p of staff){
-   const id=String(p.user), idLine=lines.findIndex(l=>new RegExp("\\b"+id+"\\b").test(l));
-   if(idLine<0){preview.warnings.push("Không thấy USER "+id+" trong OCR.");continue}
-   const candidateLines=lines.slice(Math.max(0,idLine-1),Math.min(lines.length,idLine+2));
-   const row=candidateLines.find(l=>new RegExp("\\b"+id+"\\b").test(l));
-   if(!row){continue}
-   const clean=row.replace(new RegExp("\\b"+id+"\\b","g")," ");
-   const values=nums(clean);
-   // Data row columns quantity, total revenue, loan, straight, installment. Require >=5 numbers.
-   if(values.length>=5){
-     preview.staff.push({user:id,name:p.name,sales:values[1],gift:values[4],source:row,confidence:"medium"});
-   } else preview.warnings.push("USER "+id+": OCR chưa giữ đủ 5 cột trên cùng dòng; giữ nguyên dữ liệu hiện tại.");
- }
-
- // RACE: match exact normalized program name; only accept two numeric cells on same OCR line after program label.
- const raceByNorm=new Map(races.map(r=>[norm(r[0]),r]));
- for(const line of lines){
-   const z=norm(line);
-   const hit=[...raceByNorm.entries()].filter(([k])=>k.length>5&&z.includes(k)).sort((a,b)=>b[0].length-a[0].length)[0];
-   if(!hit)continue;
-   const values=nums(line);
-   if(values.length>=2){
-     preview.races.push({name:hit[1][0],actual:values[values.length-2],target:values[values.length-1],source:line,confidence:"medium"});
-   }else preview.warnings.push("Chương trình "+hit[1][0]+": không đủ số trên cùng dòng.");
- }
-
- if(!coordRows.length)preview.warnings.unshift("Không có dữ liệu tọa độ OCR. Hãy bấm Phân tích OCR ảnh để tạo lại word-bbox.");
- else preview.warnings.unshift("Đã giữ tọa độ OCR ("+(window.ocrWordData||[]).length+" từ). Bộ ghép cột đang kiểm tra theo hàng; dòng không đủ điều kiện không tự ghi.");
- pendingMapping=preview;
- const box=document.getElementById("mappingStatus");
- const staffHtml=preview.staff.length?preview.staff.map(x=>`${x.user} • ${x.name}: QĐ ${fmt(x.sales)} / góp ${fmt(x.gift)}`).join("<br>"):"Chưa có dòng nhân viên đủ điều kiện.";
- const raceHtml=preview.races.length?preview.races.map(x=>`${x.name}: ${fmt(x.actual)} / ${fmt(x.target)}`).join("<br>"):"Chưa có dòng thi đua đủ điều kiện.";
- box.style.borderColor="#f0c36d";box.style.background="#fffbeb";
- box.innerHTML=`<b>PREVIEW – CHƯA GHI VÀO DASHBOARD</b><br>
- ${preview.store?`Store: ${fmt(preview.store.value)} • ${preview.store.line}`:"Store: không nhận diện duy nhất"}<hr>
- <b>Nhân viên (${preview.staff.length})</b><br>${staffHtml}<hr>
- <b>Thi đua (${preview.races.length})</b><br>${raceHtml}<hr>
- <b>Cảnh báo:</b><br>${preview.warnings.length?preview.warnings.join("<br>"):"Không có cảnh báo cơ bản."}
- <br><small>Chỉ xác nhận sau khi đối chiếu ảnh nguồn. OCR text không có tọa độ cột nên không tự đoán giá trị.</small>`;
+ // Detect a clearly labeled total only; never infer staff or competition values from unlabelled numbers.
+ const norm=raw.replace(/,/g,".").replace(/\s+/g," ");
+ const findLabel=(patterns)=>{for(const re of patterns){const m=norm.match(re);if(m){let n=Number(m[1].replace(/\./g,""));if(Number.isFinite(n))return n}}return null};
+ const total=findLabel([/(?:DThu|DT|Doanh thu)\s*(?:QĐ|quy đổi)?\s*(?:tổng|toàn cửa hàng)?\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i,/(?:Tổng\s*DThu\s*QĐ)\s*[:\-]?\s*([0-9]{2,}(?:[.,][0-9]+)?)/i]);
+ if(total!==null){storeSalesQd=total;render();alert("Đã map DT QĐ tổng = "+fmt(total)+" vào DATA STORE và render Dashboard.");}
+ else alert("OCR chưa tìm thấy dòng có nhãn DThu QĐ tổng rõ ràng. Không tự map số không có nhãn.");
 }
-function applyValidatedMapping(){
- if(!pendingMapping){alert("Hãy tạo Preview mapping trước.");return}
- if(!confirm("Xác nhận ghi các dòng Preview vào Dashboard? Dữ liệu chỉ ghi những dòng đã xuất hiện trong Preview."))return;
- const p=pendingMapping;
- if(p.store)storeSalesQd=p.store.value;
- for(const x of p.staff){const person=staff.find(s=>String(s.user)===x.user);if(person){person.sales=x.sales;person.gift=x.gift}}
- for(const x of p.races){const row=races.find(r=>normalizeText(r[0])===normalizeText(x.name));if(row){row[1]=x.actual;row[2]=x.target}}
- render();
- setMappingStatus("Đã áp dụng các dòng Preview được xác nhận. Các dòng thiếu/không chắc vẫn giữ dữ liệu cũ.",true);
-}
-function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
+function clearOCR(){window.__OCR_PAGES__=[];reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").value="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh."}
 </script>
 </body></html>
