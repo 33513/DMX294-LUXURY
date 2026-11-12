@@ -60,7 +60,7 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
  <div class="data-grid">
   <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value=""><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
   <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
-  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tự động V10</span></div><div class="formbox">
+  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tự động V11</span></div><div class="formbox">
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
@@ -143,19 +143,28 @@ function parseStore(text,words,imageWidth,imageHeight){
  return {sales,target,gift};
 }
 function parseStaff(rows,imageWidth){
- const W=imageWidth||1320, out=[], seen=new Set();
- const normX=x=>x/W;
- for(let i=0;i<rows.length;i++){
-  const r=rows[i],id=(r.text.match(/\b\d{4,7}\b/)||[])[0]; if(!id||seen.has(id))continue;
-  // Employee ID is in the name column; choose numeric cells from the data columns near its row.
-  const nameRows=rows.filter(q=>q.y<r.y&&r.y-q.y<100&&q.words.some(w=>normX(w.x)<.30)&&! /\b\d{4,7}\b/.test(q.text));
-  const name=nameRows.slice(-2).map(q=>q.text).join(" ").replace(/[+]/g,"").trim();
-  const nearby=rows.filter(q=>Math.abs(q.y-r.y)<105);
-  const values=nearby.flatMap(q=>q.words.filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
+ const W=imageWidth||1320, out=[], seen=new Set(), normX=x=>x/W;
+ // Mỗi dòng nhân viên được nhận diện theo USER ID; tên lấy cùng hàng và đúng vùng cột tên.
+ // Tuyệt đối không lấy tên ở dòng phía trên (nguyên nhân gây lệch tên giữa các nhân viên).
+ for(const r of rows){
+  const words=[...(r.words||[])].sort((a,b)=>a.x-b.x);
+  const idWord=words.find(w=>/^\d{4,7}$/.test(String(w.t||'').trim()));
+  if(!idWord)continue;
+  const id=String(idWord.t).trim(); if(seen.has(id))continue;
+  const yTol=Math.max(14,...words.map(w=>(w.y1||0)-(w.y0||0))*.55);
+  const sameRow=rows.filter(q=>Math.abs(q.y-r.y)<=yTol).flatMap(q=>q.words||[]).sort((a,b)=>a.x-b.x);
+  // Tên nằm ở cột tên, bên phải ID và trước cột doanh thu.
+  const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.43&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
+  let name=nameTokens.map(w=>w.t).join(' ').replace(/[+|:]/g,' ').replace(/\s+/g,' ').trim();
+  name=name.replace(/^(id|user)\s*/i,'').trim();
+  // Loại tên nhiễu rõ ràng; nếu không chắc thì để USER + ID, không lấy tên hàng khác.
+  if(name.length<3||/^(doanh thu|target|thực hiện|thuc hien)$/i.test(name))name='USER '+id;
+  const nearby=rows.filter(q=>Math.abs(q.y-r.y)<=Math.max(18,yTol*1.4));
+  const values=nearby.flatMap(q=>(q.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
   const pick=(lo,hi)=>{const a=values.filter(v=>v.x>=lo&&v.x<hi).sort((a,b)=>Math.abs(a.y-r.y)-Math.abs(b.y-r.y));return a.length?a[0].v:null};
   const sales=pick(.42,.59),gift=pick(.80,.97);
   if(sales===null&&gift===null)continue;
-  seen.add(id);out.push({user:id,name:name||("USER "+id),sales,gift,target:staffTargetDefault});
+  seen.add(id);out.push({user:id,name,sales,gift,target:staffTargetDefault});
  }
  return out;
 }
