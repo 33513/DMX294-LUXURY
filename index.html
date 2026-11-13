@@ -200,12 +200,20 @@ async function runOCR(){
  let worker=null,results=[];
  try{
   st.textContent="Đang tải thư viện OCR (lần đầu có thể mất 1–2 phút)…";
-  if(!window.Tesseract)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";sc.onload=ok;sc.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(sc)});
+  if(!window.Tesseract)await new Promise((ok,no)=>{
+   const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+   sc.onload=()=>window.Tesseract?ok():no(Error("Tesseract.js tải xong nhưng không khởi tạo được"));
+   sc.onerror=()=>no(Error("Không tải được thư viện Tesseract.js. Kiểm tra mạng/CDN hoặc chặn tiện ích trình duyệt."));
+   document.head.appendChild(sc);
+  });
+  // Dùng đường dẫn mặc định tương thích của Tesseract.js 5.
+  // corePath trỏ tới thư mục package (không phải file core JS/WASM) khiến worker có thể không khởi tạo.
   worker=await Tesseract.createWorker("vie+eng",1,{
-   workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
-   corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
-   langPath:"https://tessdata.projectnaptha.com/4.0.0",
-   logger:m=>st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"
+   logger:m=>{
+    const status=m.status||"OCR";
+    const progress=Math.round((m.progress||0)*100);
+    st.textContent=status+(m.progress!=null?" "+progress+"%":"");
+   }
   });
   for(let i=0;i<fs.length;i++){st.textContent=`OCR ảnh ${i+1}/${fs.length}: ${fs[i].name}`;const c=await preprocessImage(fs[i],2);const r=await worker.recognize(c);results.push({file:fs[i],text:r.data.text||"",words:r.data.words||[],confidence:r.data.confidence||0,width:c.width,height:c.height})}
   const tx=x=>norm(x.text||"");
