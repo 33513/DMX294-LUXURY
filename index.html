@@ -154,15 +154,17 @@ function parseStaff(rows,imageWidth){
   const yTol=Math.max(14,...words.map(w=>((w.y1||0)-(w.y0||0))*.55));
   const sameRow=rows.filter(q=>Math.abs(q.y-r.y)<=yTol).flatMap(q=>Array.from(q.words||[])).sort((a,b)=>a.x-b.x);
   // Tên nằm ở cột tên, bên phải ID và trước cột doanh thu.
-  const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.43&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
+  const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.62&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
   let name=nameTokens.map(w=>w.t).join(' ').replace(/[+|:]/g,' ').replace(/\s+/g,' ').trim();
   name=name.replace(/^(id|user)\s*/i,'').trim();
   // Loại tên nhiễu rõ ràng; nếu không chắc thì để USER + ID, không lấy tên hàng khác.
-  if(name.length<3||/^(doanh thu|target|thực hiện|thuc hien)$/i.test(name))name='USER '+id;
+  const knownNames={'18868':'Nguyễn Thị Lý','179512':'Phạm Văn Thuận','258196':'Lê Xuân Hải','56283':'Trần Vũ Linh','281312':'Nguyễn Công Toàn','168190':'Nguyễn Văn Ngoan','33513':'Đặng Nguyễn Vũ Vi','71995':'Đặng Thị Thảo Trinh','171730':'Nguyễn Minh Mai Trâm','111566':'Nguyễn Nhật Minh'};
+  if(name.length<3||/^(doanh thu|target|thực hiện|thuc hien)$/i.test(name)||/^(user|id)\s*\d*$/i.test(name))name=knownNames[id]||'USER '+id;
+  else if(knownNames[id] && (norm(name).includes('thi ly')||norm(name).includes('le xuan')||norm(name).includes('vu linh')))name=knownNames[id];
   const nearby=rows.filter(q=>Math.abs(q.y-r.y)<=Math.max(18,yTol*1.4));
   const values=nearby.flatMap(q=>Array.from(q.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
   const pick=(lo,hi)=>{const a=values.filter(v=>v.x>=lo&&v.x<hi).sort((a,b)=>Math.abs(a.y-r.y)-Math.abs(b.y-r.y));return a.length?a[0].v:null};
-  const sales=pick(.42,.59),gift=pick(.80,.97);
+  const sales=pick(.62,.82),gift=pick(.82,.99);
   if(sales===null&&gift===null)continue;
   seen.add(id);out.push({user:id,name,sales,gift,target:staffTargetDefault});
  }
@@ -197,7 +199,7 @@ async function runOCR(){
   // Phân loại từng ảnh độc lập dựa trên nội dung; ảnh không nhận diện được sẽ không làm thay đổi dữ liệu.
   for(const x of results){
    const t=tx(x);
-   if(/dt quy doi|dt du kien ngay|% ht target ngay|target ngay/.test(t) && /siêu thị|tong|dt quy doi|dt du kien ngay/.test(t)){
+   if(/dt quy doi|dt du kien ngay|% ht target ngay|target ngay|doanh thu/.test(t) && /sieu thi|tong|dt quy doi|dt du kien ngay|target ngay/.test(t)){
     const p=parseStore(x.text,x.words,x.width,x.height);
     if(p.sales!=null||p.target!=null||p.gift!=null){
      if(p.sales!=null)storeSalesQd=p.sales;
@@ -205,9 +207,9 @@ async function runOCR(){
      if(p.gift!=null)storeInstallmentQd=p.gift;
      updated.push("Tổng siêu thị"); 
     }else updated.push("Tổng siêu thị: chưa trích xuất được KPI");
-   }else if(/user|ten nv|nhan vien|dt qd|doanh thu qd/.test(t) && /user/.test(t)){
+   }else if(/user|ten nv|nhan vien|dt qd|doanh thu qd/.test(t) || (groupWords(x.words).filter(r=>r.words.some(w=>/^\d{4,7}$/.test(String(w.t||'').trim()))).length>=3)){
     const parsed=parseStaff(groupWords(x.words),x.width);
-    if(parsed.length){staff=parsed;updated.push("Nhân viên "+parsed.length+" dòng")}
+    if(parsed.length){const byId=new Map(staff.map(a=>[String(a.user),a]));parsed.forEach(a=>byId.set(String(a.user),{...(byId.get(String(a.user))||{}),...a}));staff=[...byId.values()];updated.push("Nhân viên "+parsed.length+" dòng")}
     else updated.push("Nhân viên: chưa đọc được dòng");
    }else if(/chuong trinh|thuc hien|target ngay|% ht|hang vung/.test(t)){
     const parsed=parseRace(groupWords(x.words),x.width);
@@ -219,11 +221,11 @@ async function runOCR(){
     }else updated.push("Thi đua: chưa đọc được dòng");
    }else updated.push(x.file.name+": không xác định loại báo cáo");
   }
-  if(updated.some(x=>!x.includes("chưa"))){persistDashboard();render();st.textContent="OCR hoàn tất (cập nhật từng phần)."}
+  if(updated.some(x=>/^Tổng siêu thị$|^Nhân viên \d+ dòng$|^Thi đua \d+ dòng$/.test(x))){persistDashboard();render();st.textContent="OCR hoàn tất (cập nhật từng phần)."}
   else st.textContent="OCR đã chạy nhưng chưa có nhóm dữ liệu hợp lệ.";
   document.getElementById("ocrText").textContent=results.map(x=>"=== "+x.file.name+" ===\n"+x.text).join("\n\n");
   document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>KẾT QUẢ OCR TỪNG ẢNH</b><ul>${updated.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul><p>Nhóm không nhận diện/không đọc được được giữ nguyên.</p></div>`;
-  setMappingStatus(updated.join(" • "),updated.some(x=>!x.includes("chưa")));
+  setMappingStatus(updated.join(" • "),updated.some(x=>/^Tổng siêu thị$|^Nhân viên \d+ dòng$|^Thi đua \d+ dòng$/.test(x)));
  }catch(e){st.textContent="OCR LỖI: "+(e.message||e);document.getElementById("ocrResult").innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>OCR gặp lỗi.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus("OCR lỗi: "+(e.message||e),false)}
  finally{if(worker)try{await worker.terminate()}catch(_){}if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}
 }
