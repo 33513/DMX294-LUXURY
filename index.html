@@ -199,11 +199,11 @@ async function runOCR(){
  if(btn){btn.disabled=true;btn.textContent="Đang phân tích…"}
  let worker=null,results=[];
  try{
-  st.textContent="Đang tải OCR…";
+  st.textContent="Đang tải thư viện OCR (lần đầu có thể mất 1–2 phút)…";
   if(!window.Tesseract)await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";sc.onload=ok;sc.onerror=()=>no(Error("Không tải được OCR engine"));document.head.appendChild(sc)});
   worker=await Tesseract.createWorker("vie+eng",1,{
    workerPath:"https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js",
-   corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1/tesseract-core-simd.wasm.js",
+   corePath:"https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
    langPath:"https://tessdata.projectnaptha.com/4.0.0",
    logger:m=>st.textContent=(m.status||"OCR")+" "+Math.round((m.progress||0)*100)+"%"
   });
