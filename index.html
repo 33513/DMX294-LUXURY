@@ -49,9 +49,9 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
 <section id="race">
  <div class="section-head"><div><div class="eyebrow">Category leaderboard</div><h2>03. Thi đua realtime</h2></div><p>Tiến độ từng chương trình</p></div>
  <div class="race-columns">
-  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill" id="countCE">0 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill" id="countDV">0 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
-  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill" id="countICT">0 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>CE • Điện máy</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceCE"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>DV • Dịch vụ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceDV"></tbody></table></div></div>
+  <div class="panel race-panel"><div class="panel-top"><h3>ICT • Công nghệ</h3><span class="pill">13 CT</span></div><div class="table-wrap" style="overflow-x:hidden"><table class="race-table"><thead><tr><th>CHƯƠNG TRÌNH</th><th>THỰC HIỆN</th><th>TARGET</th><th>% HT</th></tr></thead><tbody id="raceICT"></tbody></table></div></div>
  </div>
  <div class="footnote">Mỗi nhóm hiển thị riêng và sắp xếp % hoàn thành Target giảm dần.</div>
 </section>
@@ -81,7 +81,7 @@ function employeeInstallmentTotal(){
 }
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
- const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
+ const rows=races.filter(x=>raceGroups[group].some(n=>norm(n)===norm(x[0])||norm(x[0]).includes(norm(n))||norm(n).includes(norm(x[0])))).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
  document.getElementById(id).innerHTML=rows.map(x=>{let p=(x[1]==null||x[2]==null)?null:pct(x[1],x[2]),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x[0])}</td><td class="num">${x[1]==null?"—":fmt(x[1])}</td><td class="num">${x[2]==null?"—":fmt(x[2])}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
 }
 
@@ -96,7 +96,7 @@ function render(){
  document.getElementById("share").textContent=(gift==null||total==null||total===0)?"—":pct(gift,total).toFixed(1)+"%";
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
- ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>raceGroups[g].includes(x[0])).length+" CT"});
+ ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>raceGroups[g].some(n=>norm(n)===norm(x[0])||norm(x[0]).includes(norm(n))||norm(n).includes(norm(x[0])))).length+" CT"});
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
   let target=x.target??(x.sales>0?staffTargetDefault:0), done=(x.sales==null||target<=0||base==null)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
@@ -104,7 +104,7 @@ function render(){
 }
 function applyTarget(){const v=Number(document.getElementById("targetInput").value);if(!Number.isFinite(v)||v<=0){alert("Target phải lớn hơn 0");return}storeTarget=v;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
-function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V19");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
+function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V18");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
 // FIX missing utilities in original file
 function normalizeText(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 function parseVNNumber(v){let s=String(v??"").trim().replace(/[^\d.,-]/g,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,"");else if(/\.\d{3}$/.test(s))s=s.replace(/\./g,"");return Number(s)}
@@ -114,8 +114,8 @@ function employeeGiftTotal(){
  const valid=staff.filter(a=>a&&a.user!=null&&a.gift!=null&&Number.isFinite(Number(a.gift)));
  return valid.length?valid.reduce((sum,a)=>sum+Number(a.gift),0):null;
 }
-function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V19",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
-function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V19")||"null");if(!d)return;staff=Array.isArray(d.staff)?d.staff:[];races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
+function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V18",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
+function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V18")||"null");if(!d)return;staff=Array.isArray(d.staff)?d.staff:[];races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
 restoreDashboard();document.getElementById("targetInput").value=storeTarget??"";document.getElementById("staffTargetInput").value=staffTargetDefault;render();
 const reportInput=document.getElementById("reportImage");window.runOCR=runOCR;window.clearOCR=clearOCR;
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
@@ -151,22 +151,31 @@ function parseStore(text,words,imageWidth,imageHeight){
  if(giftCandidates.length){const m=giftCandidates.sort((a,b)=>a.y-b.y)[0].t.match(/(\d+(?:[.,]\d+)?)\s*\//);if(m)gift=nval(m[1]);}
  return {sales,target,gift};
 }
-function parseStaff(rows,imageWidth,imageHeight){
- const W=imageWidth||1320,H=imageHeight||1800, out=[],seen=new Set();
- const knownNames={'18868':'Nguyễn Thị Lý','179512':'Phạm Văn Thuận','258196':'Lê Xuân Hải','56283':'Trần Vũ Linh','281312':'Nguyễn Công Toàn','168190':'Nguyễn Văn Ngoan','33513':'Đặng Nguyễn Vũ Vi','71995':'Đặng Thị Thảo Trinh','171730':'Nguyễn Minh Mai Trâm','111566':'Nguyễn Nhật Minh'};
- const all=rows.flatMap(r=>r.words.map(w=>({t:String(w.t||'').trim(),x:w.x/W,y:w.y/H,x0:w.x0/W,x1:w.x1/W,y0:w.y0/H,y1:w.y1/H,cy:w.y/H,v:nval(w.t)}))).filter(w=>w.t);
- const ids=all.filter(w=>/^\d{4,7}$/.test(w.t)&&knownNames[w.t]);
- // Ảnh báo cáo nhân viên: USER ID nằm dưới tên; các số doanh thu nằm cùng cao độ với tên.
- for(const idw of ids){const id=idw.t;if(seen.has(id))continue;const y=idw.y;
-  const near=all.filter(w=>Math.abs(w.y-y)<.055);
-  const nums=near.filter(w=>w.v!=null&&/^\d+(?:[.,]\d+)?$/.test(w.t));
-  // Cột được xác định theo bố cục bảng nguồn: DT QĐ khoảng 42-58%, DT trả góp sát mép phải.
-  const pick=(lo,hi)=>{const a=nums.filter(w=>w.x>=lo&&w.x<hi).sort((a,b)=>Math.abs(a.y-y)-Math.abs(b.y-y));return a.length?a[0].v:null};
-  let sales=pick(.40,.59),gift=pick(.88,.99);
-  // Nếu ID cao/thấp lệch khỏi dòng số, tìm theo vùng y rộng hơn nhưng giữ đúng cột.
-  if(sales==null)sales=pick(.36,.62);if(gift==null)gift=pick(.84,1.0);
-  if(sales==null&&gift==null)continue;
-  seen.add(id);out.push({user:id,name:knownNames[id],sales,gift,target:staffTargetDefault});
+function parseStaff(rows,imageWidth){
+ const W=imageWidth||1320, out=[], seen=new Set(), normX=x=>x/W;
+ // Mỗi dòng nhân viên được nhận diện theo USER ID; tên lấy cùng hàng và đúng vùng cột tên.
+ // Tuyệt đối không lấy tên ở dòng phía trên (nguyên nhân gây lệch tên giữa các nhân viên).
+ for(const r of rows){
+  const words=Array.from(r.words||[]).sort((a,b)=>a.x-b.x);
+  const idWord=words.find(w=>/^\d{4,7}$/.test(String(w.t||'').trim()));
+  if(!idWord)continue;
+  const id=String(idWord.t).trim(); if(seen.has(id))continue;
+  const yTol=Math.max(14,...words.map(w=>((w.y1||0)-(w.y0||0))*.55));
+  const sameRow=rows.filter(q=>Math.abs(q.y-r.y)<=yTol).flatMap(q=>Array.from(q.words||[])).sort((a,b)=>a.x-b.x);
+  // Tên nằm ở cột tên, bên phải ID và trước cột doanh thu.
+  const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.62&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
+  let name=nameTokens.map(w=>w.t).join(' ').replace(/[+|:]/g,' ').replace(/\s+/g,' ').trim();
+  name=name.replace(/^(id|user)\s*/i,'').trim();
+  // Loại tên nhiễu rõ ràng; nếu không chắc thì để USER + ID, không lấy tên hàng khác.
+  const knownNames={'18868':'Nguyễn Thị Lý','179512':'Phạm Văn Thuận','258196':'Lê Xuân Hải','56283':'Trần Vũ Linh','281312':'Nguyễn Công Toàn','168190':'Nguyễn Văn Ngoan','33513':'Đặng Nguyễn Vũ Vi','71995':'Đặng Thị Thảo Trinh','171730':'Nguyễn Minh Mai Trâm','111566':'Nguyễn Nhật Minh'};
+  // Danh mục USER ID đã xác nhận là nguồn chuẩn; không lấy tên OCR sai/nhòe.
+  name=knownNames[id]||((name.length>=3&&!/^(doanh thu|target|thực hiện|thuc hien|user|id)\s*\d*$/i.test(name))?name:'USER '+id);
+  const nearby=rows.filter(q=>Math.abs(q.y-r.y)<=Math.max(18,yTol*1.4));
+  const values=nearby.flatMap(q=>Array.from(q.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
+  const pick=(lo,hi)=>{const a=values.filter(v=>v.x>=lo&&v.x<hi).sort((a,b)=>Math.abs(a.y-r.y)-Math.abs(b.y-r.y));return a.length?a[0].v:null};
+  const sales=pick(.40,.57),gift=pick(.84,.995);
+  if(sales===null&&gift===null)continue;
+  seen.add(id);out.push({user:id,name,sales,gift,target:staffTargetDefault});
  }
  return out;
 }
@@ -174,10 +183,10 @@ function parseRace(rows,imageWidth){
  const W=imageWidth||1320, out=[], normX=x=>x/W;
  for(const r of rows){
   const vals=Array.from(r.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),v:nval(w.t),t:w.t}));
-  const actual=vals.filter(v=>v.x>=.42&&v.x<.72).sort((a,b)=>a.x-b.x)[0]?.v;
-  const target=vals.filter(v=>v.x>=.68&&v.x<.90).sort((a,b)=>a.x-b.x)[0]?.v;
+  const actual=vals.filter(v=>v.x>=.39&&v.x<.57).sort((a,b)=>a.x-b.x)[0]?.v;
+  const target=vals.filter(v=>v.x>=.56&&v.x<.73).sort((a,b)=>a.x-b.x)[0]?.v;
   if(actual==null||target==null)continue;
-  const name=r.words.filter(w=>normX(w.x)<.50&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
+  const name=r.words.filter(w=>normX(w.x)<.39&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
   if(!name||/chuong|thuc hien|target ngay|% ht/i.test(norm(name)))continue;
   out.push([name,actual,target]);
  }
@@ -199,7 +208,11 @@ async function runOCR(){
   // Phân loại từng ảnh độc lập dựa trên nội dung; ảnh không nhận diện được sẽ không làm thay đổi dữ liệu.
   for(const x of results){
    const t=tx(x);
-   if(/dt quy doi|dt du kien ngay|% ht target ngay|target ngay|doanh thu/.test(t) && /sieu thi|tong|dt quy doi|dt du kien ngay|target ngay|% ht target ngay|doanh thu/.test(t)){
+   if((/user|ten nv|nhan vien|dt tra gop qd|dt qd khoan vay/.test(t)||groupWords(x.words).some(r=>r.words.some(w=>/^\d{4,7}$/.test(String(w.t||'').trim()))))){
+    const parsed=parseStaff(groupWords(x.words),x.width);
+    if(parsed.length){const byId=new Map(staff.map(a=>[String(a.user),a]));parsed.forEach(a=>byId.set(String(a.user),{...(byId.get(String(a.user))||{}),...a}));staff=[...byId.values()];updated.push("Nhân viên "+parsed.length+" dòng")}
+    else updated.push("Nhân viên: chưa đọc được dòng");
+   }else if(/dt quy doi|dt du kien ngay|% ht target ngay|target ngay|doanh thu/.test(t) && /sieu thi|tong|dt quy doi|dt du kien ngay|target ngay|% ht target ngay|doanh thu/.test(t)){
     const p=parseStore(x.text,x.words,x.width,x.height);
     if(p.sales!=null||p.target!=null||p.gift!=null){
      if(p.sales!=null)storeSalesQd=p.sales;
@@ -207,11 +220,7 @@ async function runOCR(){
      if(p.gift!=null)storeInstallmentQd=p.gift;
      updated.push("Tổng siêu thị"); 
     }else updated.push("Tổng siêu thị: chưa trích xuất được KPI");
-   }else if(/user|ten nv|nhan vien|dt qd|doanh thu qd/.test(t) || (groupWords(x.words).filter(r=>r.words.some(w=>/^\d{4,7}$/.test(String(w.t||'').trim()))).length>=3)){
-    const parsed=parseStaff(groupWords(x.words),x.width,x.height);
-    if(parsed.length){const byId=new Map(staff.map(a=>[String(a.user),a]));parsed.forEach(a=>byId.set(String(a.user),{...(byId.get(String(a.user))||{}),...a}));staff=[...byId.values()];updated.push("Nhân viên "+parsed.length+" dòng")}
-    else updated.push("Nhân viên: chưa đọc được dòng");
-   }else if(/chuong trinh|thuc hien|target ngay|% ht|hang vung|ce|ict|dien may|dich vu|cong nghe/.test(t) && groupWords(x.words).filter(r=>r.words.some(w=>nval(w.t)!=null)).length>=3){
+    }else if(/chuong trinh|thuc hien|target ngay|% ht|hang vung|ce|ict|dien may|dich vu|cong nghe/.test(t) && groupWords(x.words).filter(r=>r.words.some(w=>nval(w.t)!=null)).length>=3){
     const parsed=parseRace(groupWords(x.words),x.width);
     if(parsed.length){
       // Gộp vào nhóm thi đua đang có; tránh xóa CE/DV/ICT chưa được tải.
