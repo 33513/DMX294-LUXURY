@@ -92,6 +92,7 @@ function render(){
  document.getElementById("share").textContent=(gift==null||total==null||total===0)?"—":pct(gift,total).toFixed(1)+"%";
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
+ ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>raceGroups[g].includes(x[0])).length+" CT"});
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
   let target=x.target??(x.sales>0?staffTargetDefault:0), done=(x.sales==null||target<=0||base==null)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
@@ -99,14 +100,14 @@ function render(){
 }
 function applyTarget(){const v=Number(document.getElementById("targetInput").value);if(!Number.isFinite(v)||v<=0){alert("Target phải lớn hơn 0");return}storeTarget=v;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
-function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V5");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
+function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V16");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
 // FIX missing utilities in original file
 function normalizeText(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 function parseVNNumber(v){let s=String(v??"").trim().replace(/[^\d.,-]/g,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,"");else if(/\.\d{3}$/.test(s))s=s.replace(/\./g,"");return Number(s)}
 function esc(s){return String(s??"").replace(/[&<>\"']/g,c=>{if(c==="&")return "&amp;";if(c==="<")return "&lt;";if(c===">")return "&gt;";if(c==='\"')return "&quot;";return "&#39;"})}
 function setMappingStatus(msg,ok){const e=document.getElementById("mappingStatus");if(!e)return;e.textContent=(ok?"✓ ":"⚠ ")+String(msg);e.style.background=ok?"#f0fdf4":"#fff7ed";e.style.borderColor=ok?"#bbf7d0":"#fed7aa";e.style.color=ok?"#166534":"#9a3412"}
-function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V5",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
-function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V5")||"null");if(!d)return;staff=Array.isArray(d.staff)?d.staff:[];races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
+function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V16",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
+function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V16")||"null");if(!d)return;staff=Array.isArray(d.staff)?d.staff:[];races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
 restoreDashboard();document.getElementById("targetInput").value=storeTarget??"";document.getElementById("staffTargetInput").value=staffTargetDefault;render();
 const reportInput=document.getElementById("reportImage");window.runOCR=runOCR;window.clearOCR=clearOCR;
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
@@ -159,8 +160,8 @@ function parseStaff(rows,imageWidth){
   name=name.replace(/^(id|user)\s*/i,'').trim();
   // Loại tên nhiễu rõ ràng; nếu không chắc thì để USER + ID, không lấy tên hàng khác.
   const knownNames={'18868':'Nguyễn Thị Lý','179512':'Phạm Văn Thuận','258196':'Lê Xuân Hải','56283':'Trần Vũ Linh','281312':'Nguyễn Công Toàn','168190':'Nguyễn Văn Ngoan','33513':'Đặng Nguyễn Vũ Vi','71995':'Đặng Thị Thảo Trinh','171730':'Nguyễn Minh Mai Trâm','111566':'Nguyễn Nhật Minh'};
-  if(name.length<3||/^(doanh thu|target|thực hiện|thuc hien)$/i.test(name)||/^(user|id)\s*\d*$/i.test(name))name=knownNames[id]||'USER '+id;
-  else if(knownNames[id] && (norm(name).includes('thi ly')||norm(name).includes('le xuan')||norm(name).includes('vu linh')))name=knownNames[id];
+  // Danh mục USER ID đã xác nhận là nguồn chuẩn; không lấy tên OCR sai/nhòe.
+  name=knownNames[id]||((name.length>=3&&!/^(doanh thu|target|thực hiện|thuc hien|user|id)\s*\d*$/i.test(name))?name:'USER '+id);
   const nearby=rows.filter(q=>Math.abs(q.y-r.y)<=Math.max(18,yTol*1.4));
   const values=nearby.flatMap(q=>Array.from(q.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
   const pick=(lo,hi)=>{const a=values.filter(v=>v.x>=lo&&v.x<hi).sort((a,b)=>Math.abs(a.y-r.y)-Math.abs(b.y-r.y));return a.length?a[0].v:null};
@@ -174,10 +175,10 @@ function parseRace(rows,imageWidth){
  const W=imageWidth||1320, out=[], normX=x=>x/W;
  for(const r of rows){
   const vals=Array.from(r.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),v:nval(w.t),t:w.t}));
-  const actual=vals.filter(v=>v.x>=.38&&v.x<.57).sort((a,b)=>a.x-b.x)[0]?.v;
-  const target=vals.filter(v=>v.x>=.56&&v.x<.75).sort((a,b)=>a.x-b.x)[0]?.v;
+  const actual=vals.filter(v=>v.x>=.50&&v.x<.70).sort((a,b)=>a.x-b.x)[0]?.v;
+  const target=vals.filter(v=>v.x>=.70&&v.x<.84).sort((a,b)=>a.x-b.x)[0]?.v;
   if(actual==null||target==null)continue;
-  const name=r.words.filter(w=>normX(w.x)<.39&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
+  const name=r.words.filter(w=>normX(w.x)<.50&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
   if(!name||/chuong|thuc hien|target ngay|% ht/i.test(norm(name)))continue;
   out.push([name,actual,target]);
  }
@@ -211,7 +212,7 @@ async function runOCR(){
     const parsed=parseStaff(groupWords(x.words),x.width);
     if(parsed.length){const byId=new Map(staff.map(a=>[String(a.user),a]));parsed.forEach(a=>byId.set(String(a.user),{...(byId.get(String(a.user))||{}),...a}));staff=[...byId.values()];updated.push("Nhân viên "+parsed.length+" dòng")}
     else updated.push("Nhân viên: chưa đọc được dòng");
-   }else if(/chuong trinh|thuc hien|target ngay|% ht|hang vung/.test(t)){
+   }else if(/chuong trinh|thuc hien|target ngay|% ht|hang vung|ce|ict|dien may|dich vu|cong nghe/.test(t) && groupWords(x.words).some(r=>r.words.some(w=>nval(w.t)!=null))){
     const parsed=parseRace(groupWords(x.words),x.width);
     if(parsed.length){
       // Gộp vào nhóm thi đua đang có; tránh xóa CE/DV/ICT chưa được tải.
