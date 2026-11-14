@@ -153,33 +153,26 @@ function parseStore(text,words,imageWidth,imageHeight){
  return {sales,target,gift};
 }
 function parseStaff(rows,imageWidth){
-  // Tesseract bbox coordinates are normalized to image dimensions in groupWords.
-  // Anchor each employee row by exact USER ID, then read numeric cells to its right.
-  const all=[];
-  for(const row of rows) for(const w of (row.words||[])) all.push(w);
-  const masterIds=new Set(STAFF_MASTER.map(m=>m.user));
-  const anchors=[];
-  for(const w of all){
-    const id=String(w.t||"").trim();
-    if(masterIds.has(id)) anchors.push({id,y:w.y,x:w.x});
-  }
-  anchors.sort((a,b)=>a.y-b.y);
-  const unique=[];
-  for(const a of anchors) if(!unique.some(z=>z.id===a.id&&Math.abs(z.y-a.y)<0.008)) unique.push(a);
-  const out=[];
-  for(let i=0;i<unique.length;i++){
-    const a=unique[i],prev=unique[i-1],next=unique[i+1];
-    const top=prev?(prev.y+a.y)/2:a.y-0.012;
-    const bottom=next?(a.y+next.y)/2:a.y+0.012;
-    const nums=all.filter(w=>w.x>a.x+0.025&&w.y>=top&&w.y<bottom&&/^[\d.,]+$/.test(String(w.t||"").trim()))
-      .map(w=>({v:nval(w.t),x:w.x,y:w.y})).filter(w=>Number.isFinite(w.v))
-      .sort((u,v)=>u.x-v.x);
-    const m=STAFF_MASTER.find(x=>x.user===a.id);
-    if(!m||!nums.length) continue;
-    // Columns are ordered left-to-right: QĐ first, trả góp second.
-    out.push({user:a.id,name:m.name,sales:nums[0].v,gift:nums[1]?.v??null,target:staffTargetDefault});
-  }
-  return out;
+ // Mapping theo tọa độ cột của bảng nguồn, tránh chọn số theo thứ tự OCR.
+ const all=[];for(const row of rows)for(const w of (row.words||[]))all.push(w);
+ const ids=new Set(STAFF_MASTER.map(m=>m.user)),anchors=[];
+ for(const w of all){const id=String(w.t||"").trim();if(ids.has(id))anchors.push({id,y:w.y,x:w.x})}
+ anchors.sort((a,b)=>a.y-b.y);
+ const unique=[];for(const a of anchors)if(!unique.some(z=>z.id===a.id&&Math.abs(z.y-a.y)<8))unique.push(a);
+ const W=Number(imageWidth)||1, out=[];
+ for(let i=0;i<unique.length;i++){
+  const a=unique[i],prev=unique[i-1],next=unique[i+1];
+  const top=prev?(prev.y+a.y)/2:a.y-65, bottom=next?(a.y+next.y)/2:a.y+65;
+  const vals=all.filter(w=>w.y>=top&&w.y<bottom&&/^-?[\d.,]+$/.test(String(w.t||"").trim()))
+   .map(w=>({v:nval(w.t),x:w.x/W,y:w.y})).filter(w=>Number.isFinite(w.v));
+  // Cột bảng nguồn (tỷ lệ theo chiều rộng ảnh): SL 30-44%, DT QĐ 44-58%,
+  // khoản vay 58-72%, trả thẳng 72-86%, trả góp 86-100%.
+  const inCol=(lo,hi)=>vals.filter(w=>w.x>=lo&&w.x<hi).sort((u,v)=>Math.abs(u.y-a.y)-Math.abs(v.y-a.y));
+  const sales=inCol(.43,.59)[0], gift=inCol(.84,1.01)[0];
+  const m=STAFF_MASTER.find(x=>x.user===a.id);if(!m||!sales)continue;
+  out.push({user:a.id,name:m.name,sales:sales.v,gift:gift?gift.v:null,target:staffTargetDefault});
+ }
+ return out;
 }
 function parseRace(rows,imageWidth){
  const out=[]; const roster=[...raceGroups.CE,...raceGroups.DV,...raceGroups.ICT];
