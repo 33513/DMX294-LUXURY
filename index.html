@@ -153,21 +153,25 @@ function parseStore(text,words,imageWidth,imageHeight){
  return {sales,target,gift};
 }
 function parseStaff(rows,imageWidth){
- const W=imageWidth||2640, out=[], seen=new Set();
- const numToken=w=>nval(w.t);
- for(const row of rows){
-   const words=(row.words||[]).slice().sort((a,b)=>a.x-b.x);
-   const idw=words.find(w=>/^\d{4,7}$/.test(String(w.t||"").trim())&&STAFF_MASTER.some(m=>m.user===String(w.t).trim()));
-   if(!idw)continue;
-   const id=String(idw.t).trim(); if(seen.has(id))continue;
-   // Values belong to the same OCR line and are ordered by horizontal column.
-   // Do not use global fixed x-bands: report images may be portrait or landscape.
-   const nums=words.filter(w=>w.x>idw.x+8 && numToken(w)!=null && !/^\d{4,7}$/.test(String(w.t||"").trim()))
-      .sort((a,b)=>a.x-b.x);
-   if(!nums.length)continue;
-   const master=STAFF_MASTER.find(m=>m.user===id);
-   seen.add(id);
-   out.push({user:id,name:master.name,sales:numToken(nums[0]),gift:nums.length>1?numToken(nums[1]):null,target:staffTargetDefault});
+ // Mapping theo USER cố định: dùng vị trí Y của USER làm neo, gom các số
+ // trên cùng hàng (kể cả OCR tách thành nhiều line gần nhau). Không OCR tên NV.
+ const out=[], anchors=[];
+ const masterIds=new Set(STAFF_MASTER.map(m=>m.user));
+ const all=[];
+ for(const row of rows)for(const w of (row.words||[]))all.push({...w,ry:row.y});
+ for(const w of all){const t=String(w.t||'').trim();if(/^\d{4,7}$/.test(t)&&masterIds.has(t))anchors.push({id:t,y:w.y,x:w.x})}
+ anchors.sort((a,b)=>a.y-b.y);
+ const unique=[];for(const a of anchors){if(!unique.some(x=>x.id===a.id&&Math.abs(x.y-a.y)<8))unique.push(a)}
+ for(let i=0;i<unique.length;i++){
+  const a=unique[i],next=unique[i+1],y0=a.y-18,y1=next?((a.y+next.y)/2):a.y+42;
+  // lấy token số ở phía bên phải USER, nằm trong dải hàng của nhân viên đó
+  const cells=all.filter(w=>w.x>a.x+20&&w.y>=y0&&w.y<y1&&/^[\d.,]+$/.test(String(w.t||'').trim()))
+   .sort((u,v)=>u.y-v.y||u.x-v.x);
+  const nums=[];for(const w of cells){const v=nval(w.t);if(Number.isFinite(v)&&!nums.some(n=>Math.abs(n.y-w.y)<8&&Math.abs(n.x-w.x)<10))nums.push({v,y:w.y,x:w.x})}
+  nums.sort((u,v)=>u.x-v.x);
+  if(!nums.length)continue;
+  const m=STAFF_MASTER.find(x=>x.user===a.id);if(!m)continue;
+  out.push({user:a.id,name:m.name,sales:nums[0].v,gift:nums.length>1?nums[1].v:null,target:staffTargetDefault});
  }
  return out;
 }
