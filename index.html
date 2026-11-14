@@ -109,27 +109,28 @@ function render(){
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
+function resetTargets(){if(!confirm("Xóa data đã nhập và khôi phục dữ liệu mẫu?"))return;localStorage.removeItem("DMX294_DATA_V3");location.reload()}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function persistDashboard(){
-  try{
-    localStorage.setItem("DMX294_DATA_V3",JSON.stringify({
-      staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault
-    }));
-  }catch(e){console.warn("Không lưu được dashboard:",e)}
+ try{localStorage.setItem("DMX294_DATA_V3",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault}));}
+ catch(e){console.warn("Lưu dashboard thất bại",e)}
 }
 function restoreDashboard(){
-  try{
-    const raw=localStorage.getItem("DMX294_DATA_V3");
-    if(!raw)return;
-    const d=JSON.parse(raw);
-    if(Array.isArray(d.staff))staff=d.staff;
-    if(Array.isArray(d.races))races=d.races;
-    if(d.storeSalesQd!=null)storeSalesQd=d.storeSalesQd;
-    if(d.storeInstallmentQd!=null)storeInstallmentQd=d.storeInstallmentQd;
-    if(Number.isFinite(d.storeTarget))storeTarget=d.storeTarget;
-    if(Number.isFinite(d.staffTargetDefault))staffTargetDefault=d.staffTargetDefault;
-  }catch(e){console.warn("Không khôi phục được dữ liệu dashboard:",e)}
+ try{
+  const raw=localStorage.getItem("DMX294_DATA_V3");if(!raw)return;
+  const d=JSON.parse(raw);
+  // Keep the locked roster only; merge old figures by exact USER ID.
+  if(Array.isArray(d.staff)){
+   const byId=new Map(d.staff.map(x=>[String(x.user),x]));
+   staff=STAFF_MASTER.map(m=>{const old=byId.get(String(m.user))||{};return {...m,sales:old.sales??null,gift:old.gift??null,target:old.target??null}});
+  }
+  if(Array.isArray(d.races))races=d.races;
+  if(d.storeSalesQd!=null)storeSalesQd=d.storeSalesQd;
+  if(d.storeInstallmentQd!=null)storeInstallmentQd=d.storeInstallmentQd;
+  if(Number.isFinite(d.storeTarget))storeTarget=d.storeTarget;
+  if(Number.isFinite(d.staffTargetDefault))staffTargetDefault=d.staffTargetDefault;
+ }catch(e){console.warn("Khôi phục dashboard thất bại",e)}
 }
-function resetTargets(){if(!confirm("Xóa data đã nhập và khôi phục dữ liệu mẫu?"))return;localStorage.removeItem("DMX294_DATA_V3");location.reload()}
 restoreDashboard();document.getElementById("targetInput").value=storeTarget;render();
 const reportInput=document.getElementById("reportImage");
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
@@ -167,8 +168,9 @@ function applyOCRAutomatically(files){
   if(!id){nextStaff.push({...person,sales:null,gift:null});continue}
   const y=cy(id),row=er.reduce((best,r)=>Math.abs(r.y-y)<Math.abs(best.y-y)?r:best,er[0]||{words:[]});
   const nums=row.words.map(w=>({w,n:val(w.text),x:cx(w)/(fEmp.width||1)})).filter(z=>z.n!==null);
-  const sales=nums.filter(z=>z.x>=.42&&z.x<=.60).sort((a,b)=>Math.abs(cy(a.w)-y)-Math.abs(cy(b.w)-y))[0]?.n??null;
-  const gift=nums.filter(z=>z.x>=.82&&z.x<=.99).sort((a,b)=>Math.abs(cy(a.w)-y)-Math.abs(cy(b.w)-y))[0]?.n??null;
+  const rowNums=nums.filter(z=>cx(z.w)>cx(id)+3).sort((a,b)=>cx(a.w)-cx(b.w));
+  const sales=rowNums[0]?.n??null;
+  const gift=rowNums[1]?.n??null;
   nextStaff.push({...person,sales,gift});
  }
  const imgByGroup={CE:files[2],DV:files[3],ICT:files[4]},nextRace=[];
