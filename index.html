@@ -87,6 +87,7 @@ function renderRaceGroup(group,id){
 
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
 function pct(a,b){return b>0?a/b*100:0}
+const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
 function render(){
  const total=storeSalesQd, gift=(employeeInstallmentTotal()??storeInstallmentQd), base=(total==null||storeTarget==null||storeTarget<=0)?null:pct(total,storeTarget);
  document.getElementById("total").textContent=total==null?"—":fmt(total);
@@ -120,7 +121,6 @@ restoreDashboard();document.getElementById("targetInput").value=storeTarget??"";
 const reportInput=document.getElementById("reportImage");window.runOCR=runOCR;window.clearOCR=clearOCR;
 reportInput.addEventListener("change",()=>{const box=document.getElementById("imagePreview");box.innerHTML="";[...reportInput.files].forEach(f=>{const im=document.createElement("img");im.src=URL.createObjectURL(f);im.alt=f.name;im.style.cssText="max-width:150px;max-height:110px;object-fit:contain;border:1px solid #e7ebf2;border-radius:10px;padding:4px";box.appendChild(im)});document.getElementById("ocrStatus").textContent=reportInput.files.length+" ảnh đã chọn."});
 function preprocessImage(file,scale=2){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{try{const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*scale);c.height=Math.round(img.naturalHeight*scale);const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);resolve(c)}catch(e){URL.revokeObjectURL(url);reject(e)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error("Không đọc được ảnh"))};img.src=url})}
-const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
 function nval(s){
  let z=String(s??"").trim().replace(/[^0-9.,-]/g,"");
  if(!z||!/[0-9]/.test(z))return null;
