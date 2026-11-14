@@ -60,7 +60,7 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
  <div class="data-grid">
   <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value=""><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
   <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
-  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">OCR tự động V11</span></div><div class="formbox">
+  <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">Gemini OCR API V10</span></div><div class="formbox">
 <label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
@@ -83,11 +83,8 @@ let races=[];
 let storeSalesQd=null, storeInstallmentQd=null, storeTarget=null, staffTargetDefault=25;
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
- const rows=races.filter(x=>(x.group||x[3]||"")===group || raceGroups[group].includes(x.name||x[0])).sort((a,b)=>{
-  const pa=numberOrNull(a.pct??a[3])??pct(a.actual??a[1],a.target??a[2]);
-  const pb=numberOrNull(b.pct??b[3])??pct(b.actual??b[1],b.target??b[2]);return pb-pa;
- });
- document.getElementById(id).innerHTML=rows.map(x=>{const name=x.name||x[0],actual=x.actual??x[1],target=x.target??x[2],p=numberOrNull(x.pct??x[3])??(actual==null||target==null?null:pct(actual,target)),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(name)}</td><td class="num">${actual==null?"—":fmt(actual)}</td><td class="num">${target==null?"—":fmt(target)}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
+ const rows=races.filter(x=>(x[4]===group)||(!x[4]&&raceGroups[group].includes(x[0]))).sort((a,b)=>(b[3]??pct(b[1],b[2]))-(a[3]??pct(a[1],a[2])));
+ document.getElementById(id).innerHTML=rows.map(x=>{let p=x[3]??((x[1]==null||x[2]==null)?null:pct(x[1],x[2])),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x[0])}</td><td class="num">${x[1]==null?"—":fmt(x[1])}</td><td class="num">${x[2]==null?"—":fmt(x[2])}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
 }
 
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
@@ -101,7 +98,7 @@ function render(){
  document.getElementById("share").textContent=(gift==null||total==null||total===0)?"—":pct(gift,total).toFixed(1)+"%";
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
- ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>(x.group||x[3]||"")===g||raceGroups[g].includes(x.name||x[0])).length+" CT"});
+ ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>raceGroups[g].includes(x[0])).length+" CT"});
  document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
   let target=x.target??(x.sales>0?staffTargetDefault:0), done=(x.sales==null||target<=0||base==null)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
@@ -201,59 +198,46 @@ function parseRace(rows,imageWidth){
  }
  return out;
 }
-// ===== GEMINI OCR API CONFIG =====
-// Dán URL Web App Apps Script kết thúc bằng /exec vào đây.
-const DMX_GEMINI_API_URL = "DAN_URL_APPS_SCRIPT_EXEC_VAO_DAY";
-// Token phải giống DASHBOARD_TOKEN trong Script Properties. Nếu backend không bật token, để trống.
-const DMX_DASHBOARD_TOKEN = "DAN_DASHBOARD_TOKEN_VAO_DAY";
-
-function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const s=String(r.result||"");resolve(s.substring(s.indexOf(",")+1)};r.onerror=()=>reject(new Error("Không đọc được file "+file.name));r.readAsDataURL(file)})}
-function numberOrNull(v){if(v===null||v===undefined||v==="")return null;const n=Number(v);return Number.isFinite(n)?n:null}
-function normalizeApiReports(payload){
- // Chấp nhận cả {reports:[...]} và kết quả trực tiếp từ backend.
- let arr=Array.isArray(payload?.reports)?payload.reports:(Array.isArray(payload?.data)?payload.data:[payload]);
- const out={store:null,staff:[],programs:[],messages:[]};
- for(const r0 of arr){const r=r0?.data&&typeof r0.data==="object"?{...r0,...r0.data}:r0;const type=String(r.reportType||r.type||r.group||"").toUpperCase();
-  if(type==="STORE"||type==="TONG SIÊU THỊ"||type==="TONG_SIEU_THI"){
-   const x=r.store||r;out.store={salesQd:numberOrNull(x.salesQd??x.sales??x.salesqd),installmentQd:numberOrNull(x.installmentQd??x.installment??x.gift),targetDay:numberOrNull(x.targetDay??x.target)};
-  }else if(type==="STAFF"||type==="NHAN VIEN"){
-   const list=Array.isArray(r.staff)?r.staff:(Array.isArray(r.rows)?r.rows:[]);out.staff.push(...list.map(x=>({user:String(x.userId??x.user??x.id??"").trim(),sales:numberOrNull(x.salesQd??x.sales??x.sales0),gift:numberOrNull(x.installmentQd??x.gift??x.installment??x.installment0)})));
-  }else if(["CE","DV","ICT"].includes(type)){
-   const list=Array.isArray(r.programs)?r.programs:(Array.isArray(r.rows)?r.rows:[]);out.programs.push(...list.map(x=>({group:type,name:String(x.name??x.program??"").trim(),actual:numberOrNull(x.actual??x.sales??x.thucHien),target:numberOrNull(x.target),pct:numberOrNull(x.pct??x.percent??x.completion)})));
-  }else if(Array.isArray(r.programs)){
-   out.programs.push(...r.programs.map(x=>({group:String(x.group||"").toUpperCase(),name:String(x.name||x.program||"").trim(),actual:numberOrNull(x.actual),target:numberOrNull(x.target),pct:numberOrNull(x.pct)})));
+const GEMINI_OCR_API = "https://script.google.com/macros/s/AKfycbxls0JmAiGNlaDruDdQ4QttVhh1VBAywrJYMgudKeT6pU2sYiBgAAj3v7Rzo0B97VBx/exec";
+// API Apps Script đang dùng action "ocr"; dữ liệu ảnh truyền base64, không chạy Tesseract trên trình duyệt.
+function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const v=String(r.result||'');resolve(v.substring(v.indexOf(',')+1))};r.onerror=()=>reject(Error('Không đọc được file '+file.name));r.readAsDataURL(file)})}
+function numberOrNull(v){if(v===null||v===undefined||v===''||!Number.isFinite(Number(v)))return null;return Number(v)}
+function applyGeminiReports(reports){
+ let notes=[],staffById=new Map(STAFF_MASTER.map(m=>[m.user,{...m,sales:null,gift:null,target:null}])),programMap=new Map();
+ let store=null;
+ for(const r of reports||[]){
+  if(r.reportType==='store'&&r.store){store=r.store;notes.push('Tổng siêu thị');}
+  if(r.reportType==='staff'){
+   (r.staff||[]).forEach(x=>{const id=String(x.userId||'');if(!staffById.has(id)){notes.push('USER ID lạ '+id);return;}const old=staffById.get(id);staffById.set(id,{...old,sales:numberOrNull(x.salesQd),gift:numberOrNull(x.installmentQd),target:staffTargetDefault});});notes.push('Nhân viên '+(r.staff||[]).length+' dòng');
   }
-  if(r.message)out.messages.push(String(r.message));
+  ['CE','DV','ICT'].forEach(g=>(r.programs||[]).filter(x=>x.group===g).forEach(x=>{const k=g+'|'+normalizeText(x.name);programMap.set(k,{group:g,name:String(x.name||''),actual:numberOrNull(x.actual),target:numberOrNull(x.target),percent:numberOrNull(x.percent)});}));
+  (r.warnings||[]).forEach(w=>notes.push('Gemini: '+w));
  }
- return out;
+ if(store){storeSalesQd=numberOrNull(store.salesQd);storeInstallmentQd=numberOrNull(store.installmentQd);if(store.targetDay!=null){storeTarget=numberOrNull(store.targetDay);document.getElementById('targetInput').value=storeTarget??'';}notes.push('KPI tổng đã nhận');}
+ staff=STAFF_MASTER.map(m=>staffById.get(m.user));
+ races=[...programMap.values()].map(x=>[x.name,x.actual,x.target,x.percent,x.group]);
+ persistDashboard();render();return notes;
 }
 async function runOCR(){
- const files=Array.from(reportInput.files||[]);if(!files.length){alert("Vui lòng chọn ít nhất 1 ảnh báo cáo.");return}
- if(!DMX_GEMINI_API_URL||DMX_GEMINI_API_URL.includes("DAN_URL")){alert("Bạn chưa dán URL Apps Script vào DMX_GEMINI_API_URL.");return}
- const st=document.getElementById("ocrStatus"),btn=document.querySelector('button[onclick="runOCR()"]');
- if(btn){btn.disabled=true;btn.textContent="Đang gửi Gemini…"}
+ const fs=Array.from(reportInput.files||[]);if(!fs.length){alert('Vui lòng chọn 1–5 ảnh báo cáo.');return}if(fs.length>5){alert('API chỉ nhận tối đa 5 ảnh mỗi lượt.');return}
+ const st=document.getElementById('ocrStatus'),btn=document.querySelector('button[onclick="runOCR()"]');if(btn){btn.disabled=true;btn.textContent='Đang gửi Gemini…'}
  try{
-  st.textContent="Đang mã hóa "+files.length+" ảnh…";
-  const images=[];for(let i=0;i<files.length;i++){st.textContent=`Đang chuẩn bị ảnh ${i+1}/${files.length}`;images.push({name:files[i].name,mimeType:files[i].type||"image/jpeg",data:await fileToBase64(files[i])})}
-  st.textContent="Đang gửi ảnh tới Apps Script / Gemini OCR…";
-  const body={action:"processImages",images};if(DMX_DASHBOARD_TOKEN&& !DMX_DASHBOARD_TOKEN.includes("DAN_DASHBOARD"))body.token=DMX_DASHBOARD_TOKEN;
-  const resp=await fetch(DMX_GEMINI_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)});
-  const raw=await resp.text();let json;try{json=JSON.parse(raw)}catch(e){throw new Error("Apps Script trả về không phải JSON: "+raw.slice(0,300))}
-  if(!resp.ok)throw new Error("HTTP "+resp.status+" – "+(json.error||raw.slice(0,250)));
-  if(json.ok===false||json.error)throw new Error(json.error||json.message||"Apps Script báo lỗi");
-  const parsed=normalizeApiReports(json);let changed=[];
-  if(parsed.store){if(parsed.store.salesQd!=null)storeSalesQd=parsed.store.salesQd;if(parsed.store.installmentQd!=null)storeInstallmentQd=parsed.store.installmentQd;if(parsed.store.targetDay!=null){storeTarget=parsed.store.targetDay;document.getElementById("targetInput").value=storeTarget}changed.push("Tổng siêu thị")}
-  if(parsed.staff.length){const map=new Map(staff.map(x=>[x.user,x]));for(const x of parsed.staff){if(!STAFF_MASTER.some(m=>m.user===x.user))continue;const old=map.get(x.user)||STAFF_MASTER.find(m=>m.user===x.user);map.set(x.user,{...old,sales:x.sales??old.sales??null,gift:x.gift??old.gift??null,target:old.target??staffTargetDefault})}staff=STAFF_MASTER.map(m=>map.get(m.user)||({...m,sales:null,gift:null,target:null}));changed.push("Nhân viên "+parsed.staff.length+" dòng")}
-  if(parsed.programs.length){const valid=parsed.programs.filter(x=>["CE","DV","ICT"].includes(x.group)&&x.name);for(const x of valid){const idx=races.findIndex(y=>norm(y.name||y[0])===norm(x.name));const item={group:x.group,name:x.name,actual:x.actual,target:x.target,pct:x.pct};if(idx>=0)races[idx]=item;else races.push(item)}changed.push("Thi đua "+valid.length+" chương trình")}
-  if(!changed.length)throw new Error("Gemini chạy nhưng không trả dữ liệu đúng schema. Xem phản hồi API ở phần kết quả.");
-  persistDashboard();render();st.textContent="Gemini OCR hoàn tất: "+changed.join(" • ");
-  document.getElementById("ocrText").textContent=JSON.stringify(json,null,2);
-  document.getElementById("ocrResult").innerHTML=`<div class="panel" style="padding:14px"><b>KẾT QUẢ GEMINI OCR API</b><ul>${changed.map(x=>"<li>"+esc(x)+"</li>").join("")}</ul><details><summary>Xem JSON API</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(JSON.stringify(json,null,2))}</pre></details><p>Chỉ dữ liệu có USER ID đúng danh sách hoặc chương trình hợp lệ mới được cập nhật.</p></div>`;
-  setMappingStatus(changed.join(" • "),true);
- }catch(e){st.textContent="GEMINI API LỖI: "+(e.message||e);document.getElementById("ocrResult").innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Kết nối Gemini OCR thất bại.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus("API lỗi: "+(e.message||e),false)}
- finally{if(btn){btn.disabled=false;btn.textContent="Phân tích OCR ảnh"}}
+  st.textContent='Đang chuyển ảnh sang base64…';const images=[];
+  for(let i=0;i<fs.length;i++){st.textContent=`Chuẩn bị ảnh ${i+1}/${fs.length}`;images.push({name:fs[i].name,mimeType:fs[i].type||'image/jpeg',data:await fileToBase64(fs[i])})}
+  st.textContent='Đang gọi Gemini OCR API…';
+  const response=await fetch(GEMINI_OCR_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'ocr',images})});
+  const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(e){throw Error('API không trả JSON: '+raw.slice(0,300))}
+  if(!response.ok||data.ok===false)throw Error(data.error||('HTTP '+response.status));
+  if(!Array.isArray(data.images))throw Error('Phản hồi API thiếu images.');
+  const notes=applyGeminiReports(data.images);
+  const val=data.validation||{};if(val.warnings)notes.push(...val.warnings);
+  st.textContent='Gemini OCR hoàn tất • '+data.images.length+' ảnh • '+notes.length+' thông tin/cảnh báo';
+  document.getElementById('ocrText').textContent=JSON.stringify(data,null,2);
+  document.getElementById('ocrResult').innerHTML=`<div class="panel" style="padding:14px"><b>KẾT QUẢ GEMINI OCR</b><ul>${notes.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul><p>Đã đưa dữ liệu nhận được vào Dashboard. Hãy đối chiếu với ảnh gốc trước khi sử dụng.</p></div>`;
+  setMappingStatus(notes.join(' • ')||'Gemini trả dữ liệu; cần kiểm tra đối chiếu.',true);
+ }catch(e){st.textContent='GEMINI API LỖI: '+(e.message||e);document.getElementById('ocrResult').innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Kết nối Gemini thất bại.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus('API lỗi: '+(e.message||e),false)}
+ finally{if(btn){btn.disabled=false;btn.textContent='Phân tích OCR ảnh'}}
 }
-
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").textContent="";document.getElementById("ocrResult").innerHTML="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh";setMappingStatus("DATA OCR: Chưa chạy.",false)}
 </script>
 </body></html>
