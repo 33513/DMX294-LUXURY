@@ -109,6 +109,26 @@ function render(){
 }
 function applyTarget(){storeTarget=Number(document.getElementById("targetInput").value)||0;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
+function persistDashboard(){
+  try{
+    localStorage.setItem("DMX294_DATA_V3",JSON.stringify({
+      staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault
+    }));
+  }catch(e){console.warn("Không lưu được dashboard:",e)}
+}
+function restoreDashboard(){
+  try{
+    const raw=localStorage.getItem("DMX294_DATA_V3");
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    if(Array.isArray(d.staff))staff=d.staff;
+    if(Array.isArray(d.races))races=d.races;
+    if(d.storeSalesQd!=null)storeSalesQd=d.storeSalesQd;
+    if(d.storeInstallmentQd!=null)storeInstallmentQd=d.storeInstallmentQd;
+    if(Number.isFinite(d.storeTarget))storeTarget=d.storeTarget;
+    if(Number.isFinite(d.staffTargetDefault))staffTargetDefault=d.staffTargetDefault;
+  }catch(e){console.warn("Không khôi phục được dữ liệu dashboard:",e)}
+}
 function resetTargets(){if(!confirm("Xóa data đã nhập và khôi phục dữ liệu mẫu?"))return;localStorage.removeItem("DMX294_DATA_V3");location.reload()}
 restoreDashboard();document.getElementById("targetInput").value=storeTarget;render();
 const reportInput=document.getElementById("reportImage");
