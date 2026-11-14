@@ -106,14 +106,14 @@ function render(){
 }
 function applyTarget(){const v=Number(document.getElementById("targetInput").value);if(!Number.isFinite(v)||v<=0){alert("Target phải lớn hơn 0");return}storeTarget=v;persistDashboard();render()}
 function applyStaffTarget(){let t=Number(document.getElementById("staffTargetInput").value);if(!Number.isFinite(t)||t<0){alert("Vui lòng nhập Target nhân viên hợp lệ.");return}staffTargetDefault=t;staff.forEach(x=>{if(x.sales>0)x.target=t});persistDashboard();render()}
-function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V16");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
+function resetTargets(){if(!confirm("Xóa toàn bộ dữ liệu đã OCR và target?"))return;localStorage.removeItem("DMX294_DATA_V17_FIX");staff=[];races=[];storeSalesQd=storeInstallmentQd=storeTarget=null;render()}
 // FIX missing utilities in original file
 function normalizeText(s){return String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()}
 function parseVNNumber(v){let s=String(v??"").trim().replace(/[^\d.,-]/g,"");if(!s)return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");else if((s.match(/\./g)||[]).length>1)s=s.replace(/\./g,"");else if(/\.\d{3}$/.test(s))s=s.replace(/\./g,"");return Number(s)}
 function esc(s){return String(s??"").replace(/[&<>\"']/g,c=>{if(c==="&")return "&amp;";if(c==="<")return "&lt;";if(c===">")return "&gt;";if(c==='\"')return "&quot;";return "&#39;"})}
 function setMappingStatus(msg,ok){const e=document.getElementById("mappingStatus");if(!e)return;e.textContent=(ok?"✓ ":"⚠ ")+String(msg);e.style.background=ok?"#f0fdf4":"#fff7ed";e.style.borderColor=ok?"#bbf7d0":"#fed7aa";e.style.color=ok?"#166534":"#9a3412"}
-function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V16",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
-function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V16")||"null");if(!d)return;if(Array.isArray(d.staff)){
+function persistDashboard(){try{localStorage.setItem("DMX294_DATA_V17_FIX",JSON.stringify({staff,races,storeSalesQd,storeInstallmentQd,storeTarget,staffTargetDefault,updatedAt:new Date().toISOString()}))}catch(e){console.warn(e)}}
+function restoreDashboard(){try{const d=JSON.parse(localStorage.getItem("DMX294_DATA_V17_FIX")||"null");if(!d)return;if(Array.isArray(d.staff)){
  const saved=new Map(d.staff.map(x=>[String(x.user),x]));
  staff=STAFF_MASTER.map(m=>{const x=saved.get(m.user)||{};return {...m,sales:x.sales??null,gift:x.gift??null,target:x.target??null}});
 }races=Array.isArray(d.races)?d.races:[];storeSalesQd=d.storeSalesQd??null;storeInstallmentQd=d.storeInstallmentQd??null;storeTarget=d.storeTarget??null;staffTargetDefault=d.staffTargetDefault??25}catch(e){console.warn(e)}}
@@ -153,43 +153,44 @@ function parseStore(text,words,imageWidth,imageHeight){
  return {sales,target,gift};
 }
 function parseStaff(rows,imageWidth){
- const W=imageWidth||1320, out=[], seen=new Set(), normX=x=>x/W;
- // Mỗi dòng nhân viên được nhận diện theo USER ID; tên lấy cùng hàng và đúng vùng cột tên.
- // Tuyệt đối không lấy tên ở dòng phía trên (nguyên nhân gây lệch tên giữa các nhân viên).
- for(const r of rows){
-  const words=Array.from(r.words||[]).sort((a,b)=>a.x-b.x);
-  const idWord=words.find(w=>/^\d{4,7}$/.test(String(w.t||'').trim()));
-  if(!idWord)continue;
-  const id=String(idWord.t).trim(); if(seen.has(id)||!STAFF_MASTER.some(m=>m.user===id))continue;
-  const yTol=Math.max(14,...words.map(w=>((w.y1||0)-(w.y0||0))*.55));
-  const sameRow=rows.filter(q=>Math.abs(q.y-r.y)<=yTol).flatMap(q=>Array.from(q.words||[])).sort((a,b)=>a.x-b.x);
-  // Tên nằm ở cột tên, bên phải ID và trước cột doanh thu.
-  const nameTokens=sameRow.filter(w=>normX(w.x)>.18&&normX(w.x)<.62&&!/^\d+(?:[.,]\d+)?$/.test(String(w.t||''))&&!/^(id|user|\+|:)$/i.test(String(w.t||'')));
-  let name=nameTokens.map(w=>w.t).join(' ').replace(/[+|:]/g,' ').replace(/\s+/g,' ').trim();
-  name=name.replace(/^(id|user)\s*/i,'').trim();
-  // Loại tên nhiễu rõ ràng; nếu không chắc thì để USER + ID, không lấy tên hàng khác.
-  const knownNames={'18868':'Nguyễn Thị Lý','179512':'Phạm Văn Thuận','258196':'Lê Xuân Hải','56283':'Trần Vũ Linh','281312':'Nguyễn Công Toàn','168190':'Nguyễn Văn Ngoan','33513':'Đặng Nguyễn Vũ Vi','71995':'Đặng Thị Thảo Trinh','171730':'Nguyễn Minh Mai Trâm','111566':'Nguyễn Nhật Minh'};
-  // Danh mục USER ID đã xác nhận là nguồn chuẩn; không lấy tên OCR sai/nhòe.
-  name=knownNames[id]||((name.length>=3&&!/^(doanh thu|target|thực hiện|thuc hien|user|id)\s*\d*$/i.test(name))?name:'USER '+id);
-  const nearby=rows.filter(q=>Math.abs(q.y-r.y)<=Math.max(18,yTol*1.4));
-  const values=nearby.flatMap(q=>Array.from(q.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),y:q.y,v:nval(w.t)})));
-  const pick=(lo,hi)=>{const a=values.filter(v=>v.x>=lo&&v.x<hi).sort((a,b)=>Math.abs(a.y-r.y)-Math.abs(b.y-r.y));return a.length?a[0].v:null};
-  const sales=pick(.62,.82),gift=pick(.82,.99);
-  if(sales===null&&gift===null)continue;
-  seen.add(id);out.push({user:id,name,sales,gift,target:staffTargetDefault});
+ const W=imageWidth||2640, out=[], seen=new Set();
+ const numToken=w=>nval(w.t);
+ for(const row of rows){
+   const words=(row.words||[]).slice().sort((a,b)=>a.x-b.x);
+   const idw=words.find(w=>/^\d{4,7}$/.test(String(w.t||"").trim())&&STAFF_MASTER.some(m=>m.user===String(w.t).trim()));
+   if(!idw)continue;
+   const id=String(idw.t).trim(); if(seen.has(id))continue;
+   // Values belong to the same OCR line and are ordered by horizontal column.
+   // Do not use global fixed x-bands: report images may be portrait or landscape.
+   const nums=words.filter(w=>w.x>idw.x+8 && numToken(w)!=null && !/^\d{4,7}$/.test(String(w.t||"").trim()))
+      .sort((a,b)=>a.x-b.x);
+   if(!nums.length)continue;
+   const master=STAFF_MASTER.find(m=>m.user===id);
+   seen.add(id);
+   out.push({user:id,name:master.name,sales:numToken(nums[0]),gift:nums.length>1?numToken(nums[1]):null,target:staffTargetDefault});
  }
  return out;
 }
 function parseRace(rows,imageWidth){
- const W=imageWidth||1320, out=[], normX=x=>x/W;
- for(const r of rows){
-  const vals=Array.from(r.words||[]).filter(w=>nval(w.t)!=null).map(w=>({x:normX(w.x),v:nval(w.t),t:w.t}));
-  const actual=vals.filter(v=>v.x>=.50&&v.x<.70).sort((a,b)=>a.x-b.x)[0]?.v;
-  const target=vals.filter(v=>v.x>=.70&&v.x<.84).sort((a,b)=>a.x-b.x)[0]?.v;
-  if(actual==null||target==null)continue;
-  const name=r.words.filter(w=>normX(w.x)<.50&&!/^\+|^\d/.test(w.t)).map(w=>w.t).join(" ").trim();
-  if(!name||/chuong|thuc hien|target ngay|% ht/i.test(norm(name)))continue;
-  out.push([name,actual,target]);
+ const out=[];
+ const headers=/chuong trinh|thuc hien|target|% ht|% hoan thanh/i;
+ for(const row of rows){
+   const words=(row.words||[]).slice().sort((a,b)=>a.x-b.x);
+   const text=norm(words.map(w=>w.t).join(" "));
+   if(headers.test(text))continue;
+   // Ignore rows without a program label or numeric cells.
+   const firstNum=words.findIndex(w=>nval(w.t)!=null);
+   if(firstNum<1)continue;
+   const name=words.slice(0,firstNum).map(w=>w.t).join(" ").replace(/[+|]/g," ").trim();
+   if(!name||name.length<2)continue;
+   const vals=words.slice(firstNum).map(w=>nval(w.t)).filter(v=>v!=null);
+   if(!vals.length)continue;
+   // Typical table columns: Thực hiện, Target, %HT. Keep all observed values,
+   // percent from last numeric cell (often OCR splits '%' from number).
+   const actual=vals.length>=2?vals[0]:null;
+   const target=vals.length>=2?vals[1]:null;
+   const pct=vals.length>=3?vals[vals.length-1]:null;
+   out.push({name,actual,target,pct});
  }
  return out;
 }
