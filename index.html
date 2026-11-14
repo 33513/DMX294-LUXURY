@@ -83,8 +83,8 @@ let races=[];
 let storeSalesQd=null, storeInstallmentQd=null, storeTarget=null, staffTargetDefault=25;
 const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
 function renderRaceGroup(group,id){
- const rows=races.filter(x=>raceGroups[group].includes(x[0])).sort((a,b)=>pct(b[1],b[2])-pct(a[1],a[2]));
- document.getElementById(id).innerHTML=rows.map(x=>{let p=(x[1]==null||x[2]==null)?null:pct(x[1],x[2]),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x[0])}</td><td class="num">${x[1]==null?"—":fmt(x[1])}</td><td class="num">${x[2]==null?"—":fmt(x[2])}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
+ const rows=races.filter(x=>raceGroups[group].includes(x.name)).sort((a,b)=>(b.pct??pct(b.actual,b.target))-(a.pct??pct(a.actual,a.target)));
+ document.getElementById(id).innerHTML=rows.map(x=>{let p=x.pct!=null?x.pct:((x.actual==null||x.target==null)?null:pct(x.actual,x.target)),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x.name)}</td><td class="num">${x.actual==null?"—":fmt(x.actual)}</td><td class="num">${x.target==null?"—":fmt(x.target)}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
 }
 
 function fmt(n){return Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2})}
@@ -99,8 +99,8 @@ function render(){
   renderRaceGroup("CE","raceCE");renderRaceGroup("DV","raceDV");renderRaceGroup("ICT","raceICT");
  document.getElementById("staffcount").textContent=staff.length+" nhân viên";
  ["CE","DV","ICT"].forEach(g=>{const el=document.getElementById("count"+g);if(el)el.textContent=races.filter(x=>raceGroups[g].includes(x[0])).length+" CT"});
- document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>b.sales-a.sales).map(x=>{
-  let target=x.target??(x.sales>0?staffTargetDefault:0), done=(x.sales==null||target<=0||base==null)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
+ document.getElementById("staffbody").innerHTML=[...staff].sort((a,b)=>(b.sales??-1)-(a.sales??-1)).map(x=>{
+  let target=x.target??(x.sales!=null?staffTargetDefault:0), done=(x.sales==null||target<=0)?null:pct(x.sales,target), share=(x.gift==null||x.sales==null||x.sales===0)?null:pct(x.gift,x.sales), cls=done==null?"neutral":done>base?"positive":done<base?"negative":"neutral";
   return `<tr><td class="user">${x.user}</td><td class="name">${x.name}</td><td class="num">${x.sales==null?"—":fmt(x.sales)}</td><td class="num">${x.gift==null?"—":fmt(x.gift)}</td><td class="num">${share==null?"—":share.toFixed(1)+"%"}</td><td class="num">${target>0?fmt(target):"—"}</td><td><span class="percent ${target>0?cls:"neutral"}">${done==null?"—":done.toFixed(1)+"%"}</span><div class="bar"><span style="width:${done==null?0:Math.min(done,100)}%"></span></div></td></tr>`
  }).join("");
 }
@@ -176,25 +176,20 @@ function parseStaff(rows,imageWidth){
  return out;
 }
 function parseRace(rows,imageWidth){
- const out=[];
- const headers=/chuong trinh|thuc hien|target|% ht|% hoan thanh/i;
- for(const row of rows){
-   const words=(row.words||[]).slice().sort((a,b)=>a.x-b.x);
-   const text=norm(words.map(w=>w.t).join(" "));
-   if(headers.test(text))continue;
-   // Ignore rows without a program label or numeric cells.
-   const firstNum=words.findIndex(w=>nval(w.t)!=null);
-   if(firstNum<1)continue;
-   const name=words.slice(0,firstNum).map(w=>w.t).join(" ").replace(/[+|]/g," ").trim();
-   if(!name||name.length<2)continue;
-   const vals=words.slice(firstNum).map(w=>nval(w.t)).filter(v=>v!=null);
-   if(!vals.length)continue;
-   // Typical table columns: Thực hiện, Target, %HT. Keep all observed values,
-   // percent from last numeric cell (often OCR splits '%' from number).
-   const actual=vals.length>=2?vals[0]:null;
-   const target=vals.length>=2?vals[1]:null;
-   const pct=vals.length>=3?vals[vals.length-1]:null;
-   out.push({name,actual,target,pct});
+ const out=[]; const roster=[...raceGroups.CE,...raceGroups.DV,...raceGroups.ICT];
+ const clean=s=>norm(s).replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+ const similarity=(a,b)=>{const A=clean(a).split(" ").filter(Boolean),B=clean(b).split(" ").filter(Boolean);if(!A.length||!B.length)return 0;let hit=A.filter(w=>B.includes(w)).length;return hit/Math.max(A.length,B.length)};
+ for(const row of rows){const words=(row.words||[]).slice().sort((a,b)=>a.x-b.x);if(words.length<2)continue;
+ const text=norm(words.map(w=>w.t).join(" "));if(/chuong trinh|thuc hien|target|% ht|hoan thanh/.test(text))continue;
+ // Tìm tên chương trình bằng fuzzy match trên roster cố định, không tự tạo chương trình mới.
+ const best=roster.map(name=>({name,score:similarity(text,name)})).sort((a,b)=>b.score-a.score)[0];if(!best||best.score<.45)continue;
+ const nums=words.map(w=>({x:w.x,v:nval(w.t),t:w.t})).filter(w=>w.v!=null);
+ if(nums.length<2)continue;
+ // Theo thứ tự cột bảng: thực hiện, target, % hoàn thành (nếu OCR có cột %).
+ let actual=nums[0].v,target=nums[1].v,pctValue=null;
+ const last=nums[nums.length-1];if(nums.length>=3&&(/[％%]/.test(last.t)||last.v<=1000))pctValue=last.v;
+ if(pctValue==null&&target>0)pctValue=actual/target*100;
+ const old=out.find(x=>x.name===best.name);const item={name:best.name,actual,target,pct:pctValue};if(old)Object.assign(old,item);else out.push(item);
  }
  return out;
 }
@@ -230,8 +225,8 @@ async function runOCR(){
     const parsed=parseRace(groupWords(x.words),x.width);
     if(parsed.length){
       // Gộp vào nhóm thi đua đang có; tránh xóa CE/DV/ICT chưa được tải.
-      const keys=new Set(parsed.map(a=>norm(a[0]||a.name||"")));
-      races=[...races.filter(a=>!keys.has(norm(a[0]||a.name||""))),...parsed];
+      const keys=new Set(parsed.map(a=>norm(a.name)));
+      races=[...races.filter(a=>!keys.has(norm(a.name))),...parsed];
       updated.push("Thi đua "+parsed.length+" dòng");
     }else updated.push("Thi đua: chưa đọc được dòng");
    }else updated.push(x.file.name+": không xác định loại báo cáo");
