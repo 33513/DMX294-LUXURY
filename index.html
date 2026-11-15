@@ -61,7 +61,7 @@ section{margin:20px 0 28px;scroll-margin-top:16px}.section-head{display:flex;ali
   <div class="panel"><div class="panel-top"><h3>Target doanh thu QĐ</h3><span class="pill">STORE</span></div><div class="formbox"><label for="targetInput">Mục tiêu DThu QĐ (triệu đồng)</label><input id="targetInput" type="number" min="0" value=""><small>Map trực tiếp vào KPI tổng quan và % hoàn thành.</small><div class="actions"><button class="btn" onclick="applyTarget()">Cập nhật Target</button></div></div></div>
   <div class="panel"><div class="panel-top"><h3>Target ngày nhân viên QĐ</h3><span class="pill">AUTO MAP</span></div><div class="formbox"><label for="staffTargetInput">Target ngày QĐ cho mỗi nhân viên (triệu đồng)</label><input id="staffTargetInput" type="number" min="0" value="25" placeholder="Nhập target nhân viên"><small>Chỉ nhập một con số Target ngày. Hệ thống tự map cho tất cả nhân viên có doanh thu; không nhập USER hoặc tên nhân viên.</small><div class="actions"><button class="btn" onclick="applyStaffTarget()">Áp dụng Target NV</button><button class="btn secondary" onclick="resetTargets()">Reset mẫu</button></div><small>Prototype lưu tạm trên trình duyệt hiện tại. Chưa đồng bộ máy khác.</small></div></div>
   <div class="panel" style="grid-column:1/-1"><div class="panel-top"><h3>Tải ảnh báo cáo để lấy dữ liệu</h3><span class="pill">Gemini OCR API V10</span></div><div class="formbox">
-<label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
+<label for="apiTokenInput">DASHBOARD_TOKEN (nếu Apps Script đã bật bảo vệ)</label><input id="apiTokenInput" type="password" placeholder="Nhập token đã cấu hình trong Script Properties (không phải Gemini API Key)"><small>Token chỉ dùng để xác thực API; không nhập GEMINI_API_KEY tại đây.</small><br><label for="reportImage">Chọn ảnh báo cáo (JPG/PNG)</label><input id="reportImage" type="file" accept="image/*" multiple>
 <small>Chọn một hoặc nhiều ảnh. Hệ thống OCR sẽ đọc chữ trong ảnh để bạn kiểm tra.</small>
 <div id="imagePreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
 <div class="actions"><button class="btn" onclick="runOCR()">Phân tích OCR ảnh</button><button class="btn secondary" onclick="clearOCR()">Xóa ảnh</button></div>
@@ -218,6 +218,24 @@ function applyGeminiReports(reports){
  races=[...programMap.values()].map(x=>[x.name,x.actual,x.target,x.percent,x.group]);
  persistDashboard();render();return notes;
 }
+async function apiCall(action,payload={}){
+ const token=document.getElementById('apiTokenInput')?.value?.trim()||'';
+ const response=await fetch(GEMINI_OCR_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token,...payload})});
+ const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(e){throw Error('API không trả JSON: '+raw.slice(0,300))}
+ if(!response.ok||data.ok===false)throw Error(data.error||('HTTP '+response.status));return data;
+}
+function validatePreview(reports){
+ const staffIds=new Set(),programs=new Set(),warnings=[];
+ (reports||[]).forEach(r=>{
+  (r.staff||[]).forEach(x=>{const id=String(x.userId||'');if(!STAFF_MASTER.some(m=>m.user===id))warnings.push('USER ID lạ: '+id);if(staffIds.has(id))warnings.push('USER ID trùng: '+id);staffIds.add(id)});
+  (r.programs||[]).forEach(x=>{const g=String(x.group||'').toUpperCase(),name=normalizeText(x.name),key=g+'|'+name;if(programs.has(key))warnings.push('Chương trình trùng: '+x.name);programs.add(key);if(!raceGroups[g])warnings.push('Nhóm không hợp lệ: '+g)});
+ });
+ const missingStaff=STAFF_MASTER.filter(x=>!staffIds.has(x.user));
+ const counts={CE:0,DV:0,ICT:0};reports.forEach(r=>(r.programs||[]).forEach(x=>{if(counts[String(x.group||'').toUpperCase()]!==undefined)counts[String(x.group).toUpperCase()]++}));
+ missingStaff.forEach(x=>warnings.push('Thiếu nhân viên '+x.user+' '+x.name));
+ Object.keys(counts).forEach(g=>{if(counts[g]!==13)warnings.push('Thiếu/chưa đủ chương trình '+g+': '+counts[g]+'/13')});
+ return {staffCount:staffIds.size,programCounts:counts,warnings,ok:staffIds.size===7&&Object.values(counts).every(x=>x===13)&&warnings.length===0};
+}
 async function runOCR(){
  const fs=Array.from(reportInput.files||[]);if(!fs.length){alert('Vui lòng chọn 1–5 ảnh báo cáo.');return}if(fs.length>5){alert('API chỉ nhận tối đa 5 ảnh mỗi lượt.');return}
  const st=document.getElementById('ocrStatus'),btn=document.querySelector('button[onclick="runOCR()"]');if(btn){btn.disabled=true;btn.textContent='Đang gửi Gemini…'}
@@ -225,18 +243,33 @@ async function runOCR(){
   st.textContent='Đang chuyển ảnh sang base64…';const images=[];
   for(let i=0;i<fs.length;i++){st.textContent=`Chuẩn bị ảnh ${i+1}/${fs.length}`;images.push({name:fs[i].name,mimeType:fs[i].type||'image/jpeg',data:await fileToBase64(fs[i])})}
   st.textContent='Đang gọi Gemini OCR API…';
-  const response=await fetch(GEMINI_OCR_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'ocr',images})});
-  const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(e){throw Error('API không trả JSON: '+raw.slice(0,300))}
-  if(!response.ok||data.ok===false)throw Error(data.error||('HTTP '+response.status));
+  const data=await apiCall('ocr',{images});
   if(!Array.isArray(data.images))throw Error('Phản hồi API thiếu images.');
-  const notes=applyGeminiReports(data.images);
-  const val=data.validation||{};if(val.warnings)notes.push(...val.warnings);
-  st.textContent='Gemini OCR hoàn tất • '+data.images.length+' ảnh • '+notes.length+' thông tin/cảnh báo';
+  const v=validatePreview(data.images);
+  const preview=document.getElementById('ocrResult');
+  preview.innerHTML=`<div class="panel" style="padding:14px"><b>PREVIEW GEMINI OCR — CHƯA LƯU</b><p>Nhân viên: <b>${v.staffCount}/7</b> • CE: <b>${v.programCounts.CE}/13</b> • DV: <b>${v.programCounts.DV}/13</b> • ICT: <b>${v.programCounts.ICT}/13</b></p><ul>${v.warnings.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>Đủ dữ liệu theo kiểm tra sơ bộ.</li>'}</ul><button class="btn" id="confirmOCRBtn" ${v.ok?'':'disabled'}>Xác nhận & lưu dữ liệu</button> <button class="btn secondary" id="cancelOCRBtn">Hủy preview</button>${v.ok?'':'<p style="color:#b91c1c">Chưa đủ/đang có lỗi mapping. Không thể xác nhận lưu.</p>'}</div>`;
   document.getElementById('ocrText').textContent=JSON.stringify(data,null,2);
-  document.getElementById('ocrResult').innerHTML=`<div class="panel" style="padding:14px"><b>KẾT QUẢ GEMINI OCR</b><ul>${notes.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul><p>Đã đưa dữ liệu nhận được vào Dashboard. Hãy đối chiếu với ảnh gốc trước khi sử dụng.</p></div>`;
-  setMappingStatus(notes.join(' • ')||'Gemini trả dữ liệu; cần kiểm tra đối chiếu.',true);
+  document.getElementById('confirmOCRBtn')?.addEventListener('click',async()=>{
+   const cb=document.getElementById('confirmOCRBtn');cb.disabled=true;cb.textContent='Đang lưu…';
+   try{
+    const saved=await apiCall('save',{data:{confirmed:true,reports:data.images}});
+    const notes=applyGeminiReports(data.images);
+    const loaded=await apiCall('load');
+    if(loaded.data?.reports)applyGeminiReports(loaded.data.reports);
+    st.textContent='Đã xác nhận và lưu backend • '+saved.savedAt;
+    setMappingStatus('Đã lưu '+v.staffCount+'/7 nhân viên và 39/39 chương trình.',true);
+    preview.innerHTML='<div class="panel" style="padding:14px;color:#166534"><b>✓ ĐÃ LƯU VÀ ĐỒNG BỘ DASHBOARD</b><p>Backend Apps Script và dashboard đã cập nhật.</p></div>';
+   }catch(e){cb.disabled=false;cb.textContent='Xác nhận & lưu dữ liệu';alert('Không lưu được: '+e.message)}
+  });
+  document.getElementById('cancelOCRBtn')?.addEventListener('click',()=>{preview.innerHTML='';setMappingStatus('Đã hủy preview; dữ liệu cũ giữ nguyên.',false)});
+  st.textContent='Gemini OCR xong • Preview '+data.images.length+' ảnh • '+v.warnings.length+' cảnh báo';
+  setMappingStatus(v.ok?'Preview đủ điều kiện xác nhận. Dashboard chưa thay đổi.':'Preview chưa đạt; dashboard giữ nguyên.',v.ok);
  }catch(e){st.textContent='GEMINI API LỖI: '+(e.message||e);document.getElementById('ocrResult').innerHTML=`<div style="padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#991b1b;border-radius:12px"><b>Kết nối Gemini thất bại.</b><br>${esc(e.message||String(e))}</div>`;setMappingStatus('API lỗi: '+(e.message||e),false)}
  finally{if(btn){btn.disabled=false;btn.textContent='Phân tích OCR ảnh'}}
+}
+async function loadBackend(){
+ try{const d=await apiCall('load');if(d.data?.reports){applyGeminiReports(d.data.reports);setMappingStatus('Đã khôi phục dữ liệu từ Apps Script.',true);return true}return false}
+ catch(e){setMappingStatus('Không tải được backend: '+e.message,false);return false}
 }
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").textContent="";document.getElementById("ocrResult").innerHTML="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh";setMappingStatus("DATA OCR: Chưa chạy.",false)}
 </script>
