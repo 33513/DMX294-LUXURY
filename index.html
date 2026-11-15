@@ -81,7 +81,11 @@ const STAFF_MASTER=[
 let staff=STAFF_MASTER.map(x=>({...x,sales:null,gift:null,target:null}));
 let races=[];
 let storeSalesQd=null, storeInstallmentQd=null, storeTarget=null, staffTargetDefault=25;
-const raceGroups={CE:["Điện tử Samsung","CE LG","Tivi TCL","Camera","Đèn năng lượng mặt trời","Loa Phụ Kiện","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy nước nóng","Máy sấy / Máy rửa chén","Quạt gió","Nồi cơm & Nồi chiên","Điện tử"],DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Bảo hiểm Tổng","Mở thẻ tín dụng VBANK MWG và TPBANK EVO","Sim","Sim ĐMX","Vay tiền mặt","Ví trả sau","Trả chậm Homecredit","VAS","Nạp rút","Trả Chậm Điện máy & Gia dụng","Trả chậm FECREDIT, SAMSUNG F+, SINHAN, MCREDIT"],ICT:["Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Phụ kiện công nghệ","Phụ kiện khác IT & Nhóm khác","ĐIỆN THOẠI & TABLET ANDROID","Cáp sạc","Tai nghe","Sạc dự phòng","Máy giặt","Tủ lạnh / Đông / Mát","Máy lọc nước"]};
+const raceGroups={
+ CE:["Điện tử Samsung","Tivi TCL","CE LG","Máy Lạnh","Máy lọc KK - Hút bụi - Hút ẩm","Máy lọc nước","Máy nước nóng","Nồi cơm & Nồi chiên","Quạt gió","Điện tử","Máy giặt","Tủ Lạnh / Đông / Mát","Máy sấy / Máy rửa chén"],
+ DV:["Bảo hiểm Thọ ĐMX","Bảo hiểm Thọ ICT","Mở thẻ tín dụng VPBANK MWG và TPBANK EVO","Vay tiền mặt","Trả chậm Homecredit","Bảo hiểm Tổng","Ví trả sau","Nạp rút","Trả Chậm Điện máy & Gia dụng","VAS","Sim","Trả chậm FECREDIT, SAMSUNG F+, SHINHAN, MCREDIT","Sim ĐMX"],
+ ICT:["Đèn năng lượng mặt trời","Điện thoại Realme","Điện thoại Vivo","Đồng hồ & Smartwatch","Laptop","Loa Phụ Kiện","Phụ kiện công nghệ","Sạc dự phòng","Tai nghe","ĐIỆN THOẠI & TABLET ANDROID","Camera","Phụ kiện khác IT & Nhóm khác","Cáp sạc"]
+};
 function renderRaceGroup(group,id){
  const rows=races.filter(x=>(x[4]===group)||(!x[4]&&raceGroups[group].includes(x[0]))).sort((a,b)=>(b[3]??pct(b[1],b[2]))-(a[3]??pct(a[1],a[2])));
  document.getElementById(id).innerHTML=rows.map(x=>{let p=x[3]??((x[1]==null||x[2]==null)?null:pct(x[1],x[2])),c=p==null?"neutral":p>=100?"positive":"negative";return `<tr><td class="name">${esc(x[0])}</td><td class="num">${x[1]==null?"—":fmt(x[1])}</td><td class="num">${x[2]==null?"—":fmt(x[2])}</td><td class="num percent ${c}">${p==null?"—":p.toFixed(1)+"%"}</td></tr>`}).join("");
@@ -242,7 +246,7 @@ async function apiCall(action,payload={}){
  }catch(e){form.remove();iframe.remove();throw e}
 }
 function validatePreview(reports){
- const staffIds=new Set(),programs=new Set(),warnings=[];
+ const staffIds=new Set(),programs=new Set(),warnings=[];let hasStore=false;
  (reports||[]).forEach(r=>{
   (r.staff||[]).forEach(x=>{const id=String(x.userId||'');if(!STAFF_MASTER.some(m=>m.user===id))warnings.push('USER ID lạ: '+id);if(staffIds.has(id))warnings.push('USER ID trùng: '+id);staffIds.add(id)});
   (r.programs||[]).forEach(x=>{const g=String(x.group||'').toUpperCase(),name=normalizeText(x.name),key=g+'|'+name;if(programs.has(key))warnings.push('Chương trình trùng: '+x.name);programs.add(key);if(!raceGroups[g])warnings.push('Nhóm không hợp lệ: '+g)});
@@ -250,8 +254,9 @@ function validatePreview(reports){
  const missingStaff=STAFF_MASTER.filter(x=>!staffIds.has(x.user));
  const counts={CE:0,DV:0,ICT:0};reports.forEach(r=>(r.programs||[]).forEach(x=>{if(counts[String(x.group||'').toUpperCase()]!==undefined)counts[String(x.group).toUpperCase()]++}));
  missingStaff.forEach(x=>warnings.push('Thiếu nhân viên '+x.user+' '+x.name));
+ if(!hasStore)warnings.push('Thiếu báo cáo tổng siêu thị.');
  Object.keys(counts).forEach(g=>{if(counts[g]!==13)warnings.push('Thiếu/chưa đủ chương trình '+g+': '+counts[g]+'/13')});
- return {staffCount:staffIds.size,programCounts:counts,warnings,ok:staffIds.size===7&&Object.values(counts).every(x=>x===13)&&warnings.length===0};
+ return {staffCount:staffIds.size,programCounts:counts,warnings,ok:staffIds.size===7&&hasStore&&Object.values(counts).every(x=>x===13)&&warnings.length===0};
 }
 async function runOCR(){
  const fs=Array.from(reportInput.files||[]);if(!fs.length){alert('Vui lòng chọn 1–5 ảnh báo cáo.');return}if(fs.length>5){alert('API chỉ nhận tối đa 5 ảnh mỗi lượt.');return}
