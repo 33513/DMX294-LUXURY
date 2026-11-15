@@ -218,11 +218,28 @@ function applyGeminiReports(reports){
  races=[...programMap.values()].map(x=>[x.name,x.actual,x.target,x.percent,x.group]);
  persistDashboard();render();return notes;
 }
+// Transport form + iframe: tránh lỗi CORS/redirect "Failed to fetch" của Apps Script.
+let dmxApiSeq=0;
 async function apiCall(action,payload={}){
  const token=document.getElementById('apiTokenInput')?.value?.trim()||'';
- const response=await fetch(GEMINI_OCR_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token,...payload})});
- const raw=await response.text();let data;try{data=JSON.parse(raw)}catch(e){throw Error('API không trả JSON: '+raw.slice(0,300))}
- if(!response.ok||data.ok===false)throw Error(data.error||('HTTP '+response.status));return data;
+ const id='dmx294_'+(++dmxApiSeq)+'_'+Date.now();
+ const iframe=document.createElement('iframe');iframe.name=id;iframe.style.display='none';
+ const form=document.createElement('form');form.method='POST';form.action=GEMINI_OCR_API;form.target=id;form.style.display='none';
+ const input=document.createElement('input');input.type='hidden';input.name='payload';
+ input.value=JSON.stringify({action,token,requestId:id,...payload});form.appendChild(input);
+ document.body.append(iframe,form);
+ try{
+  const data=await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>{cleanup();reject(Error('Apps Script quá thời gian chờ 180 giây.'))},180000);
+   function cleanup(){clearTimeout(timer);window.removeEventListener('message',onMessage);form.remove();iframe.remove()}
+   function onMessage(ev){const m=ev.data;if(!m||m.__dmx294!==id)return;cleanup();if(m.error)reject(Error(m.error));else resolve(m.data)}
+   window.addEventListener('message',onMessage);
+   iframe.addEventListener('load',()=>{});
+   form.submit();
+  });
+  if(!data||data.ok===false)throw Error(data?.error||'Apps Script trả phản hồi không hợp lệ');
+  return data;
+ }catch(e){form.remove();iframe.remove();throw e}
 }
 function validatePreview(reports){
  const staffIds=new Set(),programs=new Set(),warnings=[];
@@ -271,6 +288,7 @@ async function loadBackend(){
  try{const d=await apiCall('load');if(d.data?.reports){applyGeminiReports(d.data.reports);setMappingStatus('Đã khôi phục dữ liệu từ Apps Script.',true);return true}return false}
  catch(e){setMappingStatus('Không tải được backend: '+e.message,false);return false}
 }
+window.addEventListener('DOMContentLoaded',()=>{loadBackend();});
 function clearOCR(){reportInput.value="";document.getElementById("imagePreview").innerHTML="";document.getElementById("ocrText").textContent="";document.getElementById("ocrResult").innerHTML="";document.getElementById("ocrStatus").textContent="Đã xóa ảnh";setMappingStatus("DATA OCR: Chưa chạy.",false)}
 </script>
 </body></html>
